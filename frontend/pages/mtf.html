@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EUR/USD | Multi-Timeframe + Technical + News | Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0e1a, #03060c);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+            color: #eef2ff;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(12, 20, 32, 0.7);
+            backdrop-filter: blur(14px);
+            border-radius: 24px;
+            border: 1px solid rgba(45, 110, 255, 0.25);
+            transition: all 0.3s ease;
+        }
+        .glass-panel:hover {
+            border-color: rgba(45, 110, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .dashboard-container { max-width: 1600px; margin: 0 auto; }
+        .hero-header {
+            background: linear-gradient(115deg, #0b1120, #111827);
+            border-radius: 24px;
+            margin-bottom: 20px;
+            padding: 1rem 1.5rem;
+            border-bottom: 3px solid #2d6eff;
+        }
+        .badge-premium {
+            background: linear-gradient(135deg, #f5af19, #f12711);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-real {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            margin-left: 8px;
+        }
+        h1 { font-size: 1.3rem; font-weight: 700; background: linear-gradient(130deg, #ffffff, #8bb4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .grid-responsive { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; margin-bottom: 1.2rem; }
+        .grid-3cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.2rem; }
+        .signal-bullish { color: #2ecc71; font-weight: 700; }
+        .signal-bearish { color: #e74c3c; font-weight: 700; }
+        .signal-neutral { color: #f1c40f; font-weight: 700; }
+        button {
+            background: #1e2a4e;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background: #2d6eff; transform: scale(0.97); }
+        .insight-text { font-size: 0.7rem; color: #b9c7e9; }
+        hr { border-color: rgba(45,110,255,0.2); margin: 0.6rem 0; }
+        .footer-note { text-align: center; font-size: 0.6rem; margin-top: 1.5rem; opacity: 0.6; }
+        .price-large { font-size: 1.6rem; font-weight: 800; font-family: monospace; }
+        .signal-display { font-size: 1.2rem; font-weight: 800; padding: 10px; border-radius: 12px; display: inline-block; }
+        .confidence-bar { height: 4px; background: #333; border-radius: 2px; overflow: hidden; margin: 8px 0; }
+        .confidence-fill { height: 100%; background: linear-gradient(90deg, #2d6eff, #00d4ff); border-radius: 2px; transition: width 0.5s; }
+        .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .metric-row:last-child { border-bottom: none; }
+        .progress-bar { height: 4px; background: #2c3e50; border-radius: 2px; overflow: hidden; margin: 6px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #2d6eff, #00d4ff); border-radius: 2px; transition: width 0.5s; }
+        .live-indicator { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 40px; }
+        .live-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; animation: pulse 1.5s infinite; display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .nav-links { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .nav-btn { background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 40px; text-decoration: none; color: #eef2ff; font-size: 11px; transition: all 0.3s; }
+        .nav-btn:hover { background: #2d6eff; transform: translateY(-2px); }
+        .timeframe-card { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; text-align: center; }
+        .timeframe-signal { font-size: 0.9rem; font-weight: 700; margin-top: 4px; }
+        .gauge-canvas { max-height: 100px; width: 100%; }
+        .gauge-card { text-align: center; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 0.5rem; }
+        @media (max-width: 768px) { body { padding: 12px; } }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="hero-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div>
+                <span class="badge-premium"><i class="fas fa-chart-line"></i> MULTI-TIMEFRAME + TECHNICAL + NEWS</span>
+                <span class="badge-real"><i class="fas fa-plug"></i> REAL DATA</span>
+                <h1>EUR/USD · Market Intelligence Dashboard</h1>
+                <p class="insight-text">Multi-Timeframe · Technical Analysis · News Sentiment | Live from Backend</p>
+            </div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span>LIVE</span>
+                <span id="timestampLive">--:--:--</span>
+                <button id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-links">
+        <a href="/" class="nav-btn"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/pages/technical.html" class="nav-btn"><i class="fas fa-chart-line"></i> Technical</a>
+        <a href="/pages/signal.html" class="nav-btn"><i class="fas fa-bolt"></i> Signal</a>
+        <a href="/pages/fundamental.html" class="nav-btn"><i class="fas fa-landmark"></i> Fundamental</a>
+        <a href="/pages/trend.html" class="nav-btn"><i class="fas fa-chart-simple"></i> Trend</a>
+        <a href="/pages/risk.html" class="nav-btn"><i class="fas fa-shield-alt"></i> Risk</a>
+    </div>
+
+    <!-- TIMEFRAME SIGNALS ROW -->
+    <div class="grid-3cols">
+        <div class="glass-panel timeframe-card">
+            <h3><i class="fas fa-clock"></i> 1H Timeframe</h3>
+            <div id="signal1h" class="timeframe-signal signal-neutral">—</div>
+            <div class="insight-text">Short-term trend</div>
+        </div>
+        <div class="glass-panel timeframe-card">
+            <h3><i class="fas fa-clock"></i> 4H Timeframe</h3>
+            <div id="signal4h" class="timeframe-signal signal-neutral">—</div>
+            <div class="insight-text">Medium-term trend</div>
+        </div>
+        <div class="glass-panel timeframe-card">
+            <h3><i class="fas fa-clock"></i> 1D Timeframe</h3>
+            <div id="signal1d" class="timeframe-signal signal-neutral">—</div>
+            <div class="insight-text">Long-term trend</div>
+        </div>
+    </div>
+
+    <!-- MAIN METRICS + SIGNAL + SENTIMENT -->
+    <div class="grid-responsive">
+        <div class="glass-panel" style="padding: 1rem; text-align:center;">
+            <h3><i class="fas fa-chart-line"></i> EUR/USD Live</h3>
+            <div class="price-large" id="currentPrice">--</div>
+            <div id="priceChange" class="insight-text">--</div>
+            <hr>
+            <div>RSI: <span id="rsiValue">--</span> | ATR: <span id="atrValue">--</span> pips</div>
+            <div>Volatility: <span id="volatilityValue">--</span>% | Regime: <span id="regimeValue">--</span></div>
+        </div>
+
+        <div class="glass-panel" style="padding: 1rem; text-align:center;">
+            <h3><i class="fas fa-bullhorn"></i> Technical Signal</h3>
+            <div id="signalType" class="signal-display signal-neutral">—</div>
+            <div class="confidence-bar"><div id="signalBar" class="confidence-fill" style="width:0%;"></div></div>
+            <div>Confidence: <span id="signalConf">--</span>% | Score: <span id="signalScore">--</span></div>
+            <div class="insight-text" id="signalDesc">—</div>
+        </div>
+
+        <div class="glass-panel" style="padding: 1rem; text-align:center;">
+            <h3><i class="fas fa-chart-pie"></i> News Sentiment</h3>
+            <canvas id="sentimentGauge" class="gauge-canvas" style="max-height:100px;"></canvas>
+            <div>Overall: <strong id="newsOverall">--</strong> | Score: <span id="newsScore">--</span></div>
+            <div class="insight-text" id="sentimentMomentum">—</div>
+        </div>
+    </div>
+
+    <!-- GAUGES ROW -->
+    <div class="grid-3cols">
+        <div class="gauge-card"><canvas id="confidenceGauge" class="gauge-canvas"></canvas><div class="insight-text">Signal Confidence</div></div>
+        <div class="gauge-card"><canvas id="riskGauge" class="gauge-canvas"></canvas><div class="insight-text">Risk Score</div></div>
+        <div class="gauge-card"><canvas id="volatilityGauge" class="gauge-canvas"></canvas><div class="insight-text">Volatility</div></div>
+    </div>
+
+    <!-- TECHNICAL DETAILS -->
+    <div class="grid-responsive">
+        <div class="glass-panel" style="padding: 1rem;">
+            <h3><i class="fas fa-chart-line"></i> Technical Indicators</h3>
+            <div class="metric-row"><span>SMA20:</span><span id="sma20">--</span></div>
+            <div class="metric-row"><span>SMA50:</span><span id="sma50">--</span></div>
+            <div class="metric-row"><span>Support:</span><span id="support">--</span></div>
+            <div class="metric-row"><span>Resistance:</span><span id="resistance">--</span></div>
+            <div class="metric-row"><span>Trend Direction:</span><span id="trendDir">--</span></div>
+            <div class="metric-row"><span>Trend Strength:</span><span id="trendStrength">--</span>%</div>
+        </div>
+
+        <div class="glass-panel" style="padding: 1rem;">
+            <h3><i class="fas fa-waveform"></i> Market Regime</h3>
+            <div class="metric-row"><span>Regime:</span><strong id="regimeDetail">--</strong></div>
+            <div class="metric-row"><span>Confidence:</span><span id="regimeConf">--</span>%</div>
+            <div class="metric-row"><span>Risk Level:</span><span id="riskLevel">--</span></div>
+            <div class="metric-row"><span>Position Mult:</span><span id="posMultiplier">--</span>x</div>
+            <div class="insight-text" id="regimeDesc">—</div>
+        </div>
+
+        <div class="glass-panel" style="padding: 1rem;">
+            <h3><i class="fas fa-chart-line"></i> VWAP & Ichimoku</h3>
+            <div class="metric-row"><span>Current VWAP:</span><span id="vwapValue">--</span></div>
+            <div class="metric-row"><span>VWAP Position:</span><span id="vwapPosition">--</span></div>
+            <div class="metric-row"><span>Ichimoku Signal:</span><span id="ichiSignal">--</span></div>
+            <div class="metric-row"><span>Cloud Status:</span><span id="cloudStatus">--</span></div>
+        </div>
+    </div>
+
+    <!-- RECOMMENDATION -->
+    <div class="glass-panel" style="padding: 1rem;">
+        <h3><i class="fas fa-lightbulb"></i> Trading Recommendation</h3>
+        <div class="grid-responsive" style="gap: 0.5rem;">
+            <div class="metric-row"><span>Action:</span><strong id="recAction">--</strong></div>
+            <div class="metric-row"><span>Entry Price:</span><span id="recEntry">--</span></div>
+            <div class="metric-row"><span>Stop Loss:</span><span id="recStopLoss">--</span></div>
+            <div class="metric-row"><span>Take Profit:</span><span id="recTakeProfit">--</span></div>
+            <div class="metric-row"><span>Confidence:</span><span id="recConfidence">--</span>%</div>
+        </div>
+        <div class="insight-text" id="recReason">—</div>
+    </div>
+
+    <div class="footer-note">
+        <i class="fas fa-chart-line"></i> Real data from /api/mtf, /api/technical, /api/news | Auto-refresh every 30s
+    </div>
+</div>
+
+<script>
+    const API_BASE = '';
+    let charts = {};
+
+    function destroyChart(id) {
+        if (charts[id]) {
+            try { charts[id].destroy(); } catch(e) {}
+            delete charts[id];
+        }
+    }
+
+    function createGauge(canvasId, value, min, max, title, colorMap) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        destroyChart(canvasId);
+        
+        let percent = ((value - min) / (max - min)) * 100;
+        percent = Math.min(100, Math.max(0, percent));
+        let color = '#2d6eff';
+        
+        if (colorMap) {
+            for (let [range, col] of Object.entries(colorMap)) {
+                const [low, high] = range.split('-').map(Number);
+                if (value >= low && value <= high) color = col;
+            }
+        }
+        
+        charts[canvasId] = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: [title, ''], datasets: [{ data: [percent, 100 - percent], backgroundColor: [color, '#2c3e50'], borderWidth: 0 }] },
+            options: { cutout: '70%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: () => `${title}: ${value.toFixed(1)}` } } }, responsive: true, maintainAspectRatio: true }
+        });
+    }
+
+    function getSignalClass(signal) {
+        if (!signal) return 'signal-neutral';
+        const s = signal.toUpperCase();
+        if (s.includes('BULL') || s.includes('BUY')) return 'signal-bullish';
+        if (s.includes('BEAR') || s.includes('SELL')) return 'signal-bearish';
+        return 'signal-neutral';
+    }
+
+    function formatPrice(price) {
+        if (!price) return '--';
+        if (typeof price === 'string') price = parseFloat(price);
+        if (isNaN(price) || !isFinite(price)) return '--';
+        return price.toFixed(5);
+    }
+
+    function safeValue(value, defaultValue = '--') {
+        if (value === undefined || value === null) return defaultValue;
+        if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) return defaultValue;
+        return value;
+    }
+
+    // ============================================================
+    // API CALLS - CORRECT ENDPOINTS
+    // ============================================================
+    
+    async function apiCall(endpoint) {
+        try {
+            const startTime = performance.now();
+            const response = await fetch(`${API_BASE}${endpoint}`);
+            const fetchTime = performance.now() - startTime;
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            return { success: true, data, fetchTime };
+        } catch (error) {
+            console.error(`API Error ${endpoint}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // ============================================================
+    // UPDATE FUNCTIONS
+    // ============================================================
+
+    function updateMTFUI(data) {
+        // Timeframe signals
+        const timeframes = data.timeframes || {};
+        
+        const getDirection = (tf) => {
+            const tfData = timeframes[tf];
+            if (!tfData) return 'NEUTRAL';
+            const dir = tfData.direction || 'SIDEWAYS';
+            if (dir === 'BULLISH') return 'BULLISH';
+            if (dir === 'BEARISH') return 'BEARISH';
+            return 'NEUTRAL';
+        };
+        
+        const h1Signal = getDirection('H1');
+        const h4Signal = getDirection('H4');
+        const d1Signal = getDirection('D1');
+        
+        const h1El = document.getElementById('signal1h');
+        if (h1El) {
+            h1El.textContent = h1Signal;
+            h1El.className = `timeframe-signal ${getSignalClass(h1Signal)}`;
+        }
+        
+        const h4El = document.getElementById('signal4h');
+        if (h4El) {
+            h4El.textContent = h4Signal;
+            h4El.className = `timeframe-signal ${getSignalClass(h4Signal)}`;
+        }
+        
+        const d1El = document.getElementById('signal1d');
+        if (d1El) {
+            d1El.textContent = d1Signal;
+            d1El.className = `timeframe-signal ${getSignalClass(d1Signal)}`;
+        }
+        
+        // Market Regime
+        const context = data.market_context || {};
+        const regimeValueEl = document.getElementById('regimeValue');
+        if (regimeValueEl) regimeValueEl.innerHTML = context.phase || 'UNKNOWN';
+        
+        const regimeDetailEl = document.getElementById('regimeDetail');
+        if (regimeDetailEl) regimeDetailEl.innerHTML = context.phase || 'UNKNOWN';
+        
+        const alignment = data.alignment || {};
+        const regimeConfEl = document.getElementById('regimeConf');
+        if (regimeConfEl) regimeConfEl.innerHTML = alignment.confidence || 50;
+        
+        const regimeDescEl = document.getElementById('regimeDesc');
+        if (regimeDescEl) regimeDescEl.innerHTML = context.description || 'Analyzing market structure';
+        
+        // VWAP & Ichimoku
+        const vwap = data.vwap || {};
+        const vwapValueEl = document.getElementById('vwapValue');
+        if (vwapValueEl) vwapValueEl.innerHTML = formatPrice(vwap.current_vwap);
+        
+        const vwapPositionEl = document.getElementById('vwapPosition');
+        if (vwapPositionEl) vwapPositionEl.innerHTML = vwap.price_position || '--';
+        
+        const ichimoku = data.ichimoku || {};
+        const ichiSig = ichimoku.signal || {};
+        const ichiSignalEl = document.getElementById('ichiSignal');
+        if (ichiSignalEl) ichiSignalEl.innerHTML = ichiSig.signal || 'NEUTRAL';
+        
+        const cloudStatusEl = document.getElementById('cloudStatus');
+        if (cloudStatusEl) cloudStatusEl.innerHTML = ichimoku.price_position || '--';
+        
+        // Risk multiplier
+        const riskMult = data.risk_multiplier || 1.0;
+        const posMultiplierEl = document.getElementById('posMultiplier');
+        if (posMultiplierEl) posMultiplierEl.innerHTML = riskMult;
+        
+        // Recommendation from MTF
+        const rec = data.recommendations || {};
+        const action = rec.action || 'HOLD';
+        const recActionEl = document.getElementById('recAction');
+        if (recActionEl) {
+            recActionEl.innerHTML = action;
+            recActionEl.className = getSignalClass(action);
+        }
+        
+        const recEntryEl = document.getElementById('recEntry');
+        if (recEntryEl) recEntryEl.innerHTML = formatPrice(rec.entry_price);
+        
+        const recStopLossEl = document.getElementById('recStopLoss');
+        if (recStopLossEl) recStopLossEl.innerHTML = formatPrice(rec.stop_loss);
+        
+        const recTakeProfitEl = document.getElementById('recTakeProfit');
+        if (recTakeProfitEl) recTakeProfitEl.innerHTML = formatPrice(rec.take_profit);
+        
+        const recConfidenceEl = document.getElementById('recConfidence');
+        if (recConfidenceEl) recConfidenceEl.innerHTML = rec.confidence || 50;
+        
+        const recReasonEl = document.getElementById('recReason');
+        if (recReasonEl) recReasonEl.innerHTML = rec.reason || 'Analyzing market conditions...';
+    }
+
+    function updateTechnicalUI(data) {
+        // Combined signal
+        const combined = data.combined_signal || {};
+        const signal = combined.signal || 'NEUTRAL';
+        const confidence = combined.confidence || 50;
+        const score = combined.score || 0;
+        
+        const signalTypeEl = document.getElementById('signalType');
+        if (signalTypeEl) {
+            signalTypeEl.innerHTML = signal;
+            signalTypeEl.className = `signal-display ${getSignalClass(signal)}`;
+        }
+        
+        const signalBarEl = document.getElementById('signalBar');
+        if (signalBarEl) signalBarEl.style.width = `${confidence}%`;
+        
+        const signalConfEl = document.getElementById('signalConf');
+        if (signalConfEl) signalConfEl.innerHTML = confidence;
+        
+        const signalScoreEl = document.getElementById('signalScore');
+        if (signalScoreEl) signalScoreEl.innerHTML = score;
+        
+        const signalDescEl = document.getElementById('signalDesc');
+        if (signalDescEl) signalDescEl.innerHTML = `Technical analysis from ${data.data_points || 0} data points`;
+        
+        // Indicators
+        const indicators = data.indicators || {};
+        
+        // RSI
+        const rsiValueEl = document.getElementById('rsiValue');
+        if (rsiValueEl) rsiValueEl.innerHTML = safeValue(indicators.rsi);
+        
+        // ATR
+        const atr = indicators.atr || {};
+        const atrValueEl = document.getElementById('atrValue');
+        if (atrValueEl) atrValueEl.innerHTML = safeValue(atr.pips);
+        
+        // Volatility
+        const volatilityValueEl = document.getElementById('volatilityValue');
+        if (volatilityValueEl) volatilityValueEl.innerHTML = safeValue(indicators.volatility);
+        
+        // Moving Averages - REAL DATA from Yahoo Finance
+        const ma = indicators.moving_averages || {};
+        const sma20El = document.getElementById('sma20');
+        if (sma20El) sma20El.innerHTML = formatPrice(ma.sma_20);
+        
+        const sma50El = document.getElementById('sma50');
+        if (sma50El) sma50El.innerHTML = formatPrice(ma.sma_50);
+        
+        // Support & Resistance - REAL DATA
+        const supportEl = document.getElementById('support');
+        if (supportEl) supportEl.innerHTML = formatPrice(indicators.support);
+        
+        const resistanceEl = document.getElementById('resistance');
+        if (resistanceEl) resistanceEl.innerHTML = formatPrice(indicators.resistance);
+        
+        // Trend
+        const trend = indicators.trend || {};
+        const trendDir = trend.direction || 'SIDEWAYS';
+        const trendDirEl = document.getElementById('trendDir');
+        if (trendDirEl) {
+            trendDirEl.innerHTML = trendDir;
+            trendDirEl.className = getSignalClass(trendDir);
+        }
+        
+        const trendStrengthEl = document.getElementById('trendStrength');
+        if (trendStrengthEl) trendStrengthEl.innerHTML = safeValue(trend.strength);
+        
+        // Risk level
+        const risk = data.risk || {};
+        const riskLevelEl = document.getElementById('riskLevel');
+        if (riskLevelEl) riskLevelEl.innerHTML = risk.risk_level || 'MODERATE';
+        
+        // Gauges
+        const volatility = safeValue(indicators.volatility, 15);
+        createGauge('volatilityGauge', parseFloat(volatility), 0, 50, 'Volatility', {
+            '0-15': '#00ff88', '15-30': '#ffaa00', '30-50': '#ff4444'
+        });
+        
+        createGauge('confidenceGauge', confidence, 0, 100, 'Confidence', {
+            '0-30': '#ff4444', '30-60': '#ffaa00', '60-100': '#00ff88'
+        });
+        
+        const riskScore = risk.total_risk || 50;
+        createGauge('riskGauge', riskScore, 0, 100, 'Risk', {
+            '0-30': '#00ff88', '30-60': '#ffaa00', '60-100': '#ff4444'
+        });
+        
+        // Update current price using SMA20 (real data)
+        const currentPriceEl = document.getElementById('currentPrice');
+        if (currentPriceEl && ma.sma_20) {
+            currentPriceEl.innerHTML = formatPrice(ma.sma_20);
+        }
+        
+        // Update price change indicator
+        const priceChangeEl = document.getElementById('priceChange');
+        if (priceChangeEl && indicators.trend) {
+            const trendDirForChange = trend.direction || 'SIDEWAYS';
+            priceChangeEl.innerHTML = trendDirForChange === 'BULLISH' ? '▲ Uptrend' : trendDirForChange === 'BEARISH' ? '▼ Downtrend' : '◆ Sideways';
+            priceChangeEl.className = `insight-text ${trendDirForChange === 'BULLISH' ? 'signal-bullish' : trendDirForChange === 'BEARISH' ? 'signal-bearish' : 'signal-neutral'}`;
+        }
+    }
+
+    function updateNewsUI(data) {
+        if (!data) return;
+        
+        const sentiment = data.sentiment_summary || {};
+        const overall = sentiment.overall || 'neutral';
+        const score = sentiment.score || 0;
+        
+        const newsOverallEl = document.getElementById('newsOverall');
+        if (newsOverallEl) {
+            newsOverallEl.innerHTML = overall.toUpperCase();
+            newsOverallEl.className = getSignalClass(overall);
+        }
+        
+        const newsScoreEl = document.getElementById('newsScore');
+        if (newsScoreEl) newsScoreEl.innerHTML = safeValue(score);
+        
+        const momentum = data.sentiment_momentum || {};
+        const sentimentMomentumEl = document.getElementById('sentimentMomentum');
+        if (sentimentMomentumEl) sentimentMomentumEl.innerHTML = `Momentum: ${momentum.trend || 'stable'}`;
+        
+        // Sentiment Gauge
+        createGauge('sentimentGauge', score * 100, -100, 100, 'Sentiment', {
+            '-100--20': '#ff4444', '-20-20': '#ffaa00', '20-100': '#00ff88'
+        });
+    }
+
+    // ============================================================
+    // MAIN REFRESH FUNCTION
+    // ============================================================
+    
+    async function refreshAll() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            refreshBtn.disabled = true;
+        }
+        
+        try {
+            // Fetch all data in parallel from correct endpoints
+            const [mtfResult, techResult, newsResult] = await Promise.all([
+                apiCall('/api/mtf'),
+                apiCall('/api/technical'),
+                apiCall('/api/news?days=3')
+            ]);
+            
+            if (mtfResult.success && mtfResult.data) updateMTFUI(mtfResult.data);
+            if (techResult.success && techResult.data) updateTechnicalUI(techResult.data);
+            if (newsResult.success && newsResult.data) updateNewsUI(newsResult.data);
+            
+        } catch (error) {
+            console.error('Refresh error:', error);
+        } finally {
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+                refreshBtn.disabled = false;
+            }
+            document.getElementById('timestampLive').innerHTML = new Date().toLocaleTimeString();
+        }
+    }
+
+    // Initialize
+    refreshAll();
+    setInterval(refreshAll, 30000);
+    setInterval(() => {
+        const timestampEl = document.getElementById('timestampLive');
+        if (timestampEl) timestampEl.innerHTML = new Date().toLocaleTimeString();
+    }, 1000);
+</script>
+</body>
+</html>

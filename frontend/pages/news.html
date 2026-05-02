@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News & Sentiment | EUR/USD Signal Platform | Real-time Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: radial-gradient(circle at 20% 0%, #0a0f1e, #050a14); font-family: 'Inter', sans-serif; color: #edf2ff; padding: 24px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .logo h1 { font-size: 1.5rem; background: linear-gradient(120deg, #fff, #8bb4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .badge { background: rgba(45, 110, 255, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; color: #8bb4ff; }
+        .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav-btn { background: rgba(30, 42, 78, 0.8); padding: 8px 20px; border-radius: 40px; text-decoration: none; color: white; font-size: 0.85rem; transition: all 0.3s; }
+        .nav-btn:hover { background: #2d6eff; transform: translateY(-2px); }
+        .live-indicator { background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 40px; font-size: 12px; display: flex; align-items: center; gap: 10px; }
+        .live-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .card { background: rgba(12, 20, 32, 0.65); backdrop-filter: blur(14px); border: 1px solid rgba(45,110,255,0.25); border-radius: 24px; padding: 20px; transition: all 0.3s; }
+        .card:hover { border-color: rgba(45,110,255,0.5); transform: translateY(-2px); }
+        .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #8bb4ff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        
+        .news-item { padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.3); border-radius: 14px; border-left: 4px solid; cursor: pointer; transition: all 0.2s; }
+        .news-item:hover { background: rgba(45,110,255,0.1); transform: translateX(5px); }
+        .news-positive { border-left-color: #2ecc71; }
+        .news-negative { border-left-color: #e74c3c; }
+        .news-neutral { border-left-color: #f1c40f; }
+        .news-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 8px; line-height: 1.4; }
+        .news-meta { font-size: 0.65rem; color: #888; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .news-sentiment-badge { padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; font-weight: 600; }
+        .sentiment-positive { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .sentiment-negative { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .sentiment-neutral { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+        
+        .metric-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .metric-row:last-child { border-bottom: none; }
+        .progress-bar { height: 6px; background: #2c3e50; border-radius: 3px; overflow: hidden; margin: 8px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #2d6eff, #00d4ff); border-radius: 3px; transition: width 0.5s; }
+        
+        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; opacity: 0.6; }
+        canvas { max-height: 200px; width: 100%; }
+        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .topic-cloud { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .topic-tag { background: rgba(45,110,255,0.15); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; transition: all 0.2s; }
+        .topic-tag:hover { background: rgba(45,110,255,0.3); transform: scale(1.05); }
+        
+        @media (max-width: 768px) { body { padding: 16px; } .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1><i class="fas fa-newspaper"></i> News & Sentiment Analysis</h1>
+            <div class="badge" style="margin-top: 5px;">Real News · VADER + TextBlob Sentiment · Topic Extraction · Market Impact</div>
+        </div>
+        <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span>REAL DATA</span>
+            <span id="liveTimestamp">--:--:--</span>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="/" class="nav-btn"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/pages/technical.html" class="nav-btn"><i class="fas fa-chart-line"></i> Technical</a>
+        <a href="/pages/signal.html" class="nav-btn"><i class="fas fa-bolt"></i> Signal</a>
+        <a href="/pages/fundamental.html" class="nav-btn"><i class="fas fa-landmark"></i> Fundamental</a>
+        <a href="/pages/mtf.html" class="nav-btn"><i class="fas fa-clock"></i> MTF</a>
+        <a href="/pages/economic-calendar.html" class="nav-btn"><i class="fas fa-calendar"></i> Calendar</a>
+    </div>
+
+    <!-- Main Sentiment Cards -->
+    <div class="grid-2">
+        <div class="card" style="text-align: center;">
+            <div><span class="live-dot"></span> OVERALL SENTIMENT</div>
+            <div id="overallSentiment" style="font-size: 2rem; font-weight: 800; margin: 15px 0;">---</div>
+            <div class="progress-bar"><div id="sentimentBar" class="progress-fill" style="width: 0%;"></div></div>
+            <div class="metric-row"><span>Sentiment Score:</span><strong id="sentimentScore">--</strong> (-1 to +1)</div>
+            <div class="metric-row"><span>Confidence:</span><span id="sentimentConfidence">--</span>%</div>
+            <div class="metric-row"><span>Data Source:</span><span id="dataSource">NewsAPI / GNews</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-pie"></i> Sentiment Distribution</div>
+            <canvas id="sentimentChart" height="160"></canvas>
+            <div class="grid-3" style="margin-top: 15px; gap: 10px;">
+                <div class="metric-row"><span>😊 Positive:</span><strong id="posCount">--</strong> (<span id="posPct">--</span>%)</div>
+                <div class="metric-row"><span>😞 Negative:</span><strong id="negCount">--</strong> (<span id="negPct">--</span>%)</div>
+                <div class="metric-row"><span>😐 Neutral:</span><strong id="neuCount">--</strong> (<span id="neuPct">--</span>%)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Sentiment Metrics -->
+    <div class="grid-3">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Sentiment Trend</div>
+            <div class="metric-row"><span>📈 Bullish Signals:</span><span id="bullishSignals">--</span></div>
+            <div class="metric-row"><span>📉 Bearish Signals:</span><span id="bearishSignals">--</span></div>
+            <div class="metric-row"><span>⚖️ Net Sentiment:</span><span id="netSentiment">--</span></div>
+            <div class="metric-row"><span>📊 Volatility Impact:</span><span id="volImpact">--</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Market Impact</div>
+            <div class="metric-row"><span>Expected Direction:</span><strong id="expectedDirection">--</strong></div>
+            <div class="metric-row"><span>Confidence:</span><span id="impactConfidence">--</span>%</div>
+            <div class="metric-row"><span>Expected Move:</span><span id="expectedMove">--</span> pips</div>
+            <div class="metric-row"><span>Risk Level:</span><span id="sentimentRisk">--</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Performance Metrics</div>
+            <div class="metric-row"><span>Total Articles:</span><strong id="totalArticles">--</strong></div>
+            <div class="metric-row"><span>Time Range:</span><span id="timeRange">Last 3 days</span></div>
+            <div class="metric-row"><span>Avg Relevance:</span><span id="avgRelevance">--</span>%</div>
+            <div class="metric-row"><span>Data Freshness:</span><span id="freshness">--</span></div>
+        </div>
+    </div>
+
+    <!-- News Feed -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-newspaper"></i> Latest News 
+            <span style="margin-left: auto; font-size: 0.7rem;" id="newsCount"></span>
+        </div>
+        <div id="newsFeed"></div>
+        <div class="insight-text" id="newsLoadStatus" style="text-align: center; padding: 20px;"></div>
+    </div>
+
+    <!-- Topic Cloud -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-tags"></i> Trending Topics</div>
+        <div id="topicCloud" class="topic-cloud"></div>
+    </div>
+
+    <div class="footer">
+        <i class="fas fa-chart-line"></i> Real news from NewsAPI/GNews | Sentiment analysis with VADER + TextBlob | Auto-refresh every 60 seconds
+    </div>
+</div>
+
+<script>
+    // API Service
+    const API_BASE = '';
+    
+    async function apiCall(endpoint) {
+        try {
+            const response = await fetch(`${API_BASE}${endpoint}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`API Error ${endpoint}:`, error);
+            return null;
+        }
+    }
+
+    // Chart instance
+    let sentimentChart = null;
+
+    // Helper functions
+    function getSentimentClass(sentiment) {
+        const s = String(sentiment).toLowerCase();
+        if (s === 'positive' || s === 'bullish') return 'sentiment-positive';
+        if (s === 'negative' || s === 'bearish') return 'sentiment-negative';
+        return 'sentiment-neutral';
+    }
+
+    function getSignalClass(value) {
+        if (typeof value === 'number') {
+            return value > 0.2 ? 'sentiment-positive' : value < -0.2 ? 'sentiment-negative' : 'sentiment-neutral';
+        }
+        const s = String(value).toLowerCase();
+        if (s.includes('bull') || s.includes('positive')) return 'sentiment-positive';
+        if (s.includes('bear') || s.includes('negative')) return 'sentiment-negative';
+        return 'sentiment-neutral';
+    }
+
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return 'Unknown';
+        try {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        } catch {
+            return timestamp;
+        }
+    }
+
+    // Main refresh function
+    async function refreshAll() {
+        const newsFeedDiv = document.getElementById('newsFeed');
+        const loadStatusDiv = document.getElementById('newsLoadStatus');
+        
+        if (loadStatusDiv) loadStatusDiv.innerHTML = '<div class="loading-spinner"></div> Loading news...';
+        
+        try {
+            // Fetch news data from backend
+            const newsData = await apiCall('/api/news?days=3');
+            
+            if (newsData && (newsData.articles || newsData.success !== false)) {
+                updateUI(newsData);
+                if (loadStatusDiv) loadStatusDiv.innerHTML = '';
+            } else {
+                if (loadStatusDiv) loadStatusDiv.innerHTML = '⚠️ Unable to fetch news data. Backend may be unavailable.';
+                showPlaceholderData();
+            }
+        } catch (error) {
+            console.error('Refresh error:', error);
+            if (loadStatusDiv) loadStatusDiv.innerHTML = `⚠️ Error: ${error.message}`;
+            showPlaceholderData();
+        }
+        
+        document.getElementById('liveTimestamp').innerHTML = new Date().toLocaleTimeString();
+    }
+
+    function updateUI(data) {
+        // Sentiment summary
+        const sent = data.sentiment_summary || {};
+        const overall = sent.overall || 'NEUTRAL';
+        const score = sent.score || 0;
+        const confidence = sent.confidence || 50;
+        
+        document.getElementById('overallSentiment').innerHTML = overall.toUpperCase();
+        document.getElementById('overallSentiment').className = getSignalClass(overall);
+        document.getElementById('sentimentScore').innerHTML = score.toFixed(2);
+        document.getElementById('sentimentConfidence').innerHTML = confidence;
+        document.getElementById('sentimentBar').style.width = `${(score + 1) * 50}%`;
+        
+        // Distribution
+        const pos = sent.positive || 0;
+        const neg = sent.negative || 0;
+        const neu = sent.neutral || 0;
+        const total = pos + neg + neu;
+        
+        document.getElementById('posCount').innerHTML = pos;
+        document.getElementById('posPct').innerHTML = total > 0 ? ((pos / total) * 100).toFixed(1) : 0;
+        document.getElementById('negCount').innerHTML = neg;
+        document.getElementById('negPct').innerHTML = total > 0 ? ((neg / total) * 100).toFixed(1) : 0;
+        document.getElementById('neuCount').innerHTML = neu;
+        document.getElementById('neuPct').innerHTML = total > 0 ? ((neu / total) * 100).toFixed(1) : 0;
+        document.getElementById('totalArticles').innerHTML = sent.total || 0;
+        
+        // Additional metrics
+        document.getElementById('bullishSignals').innerHTML = sent.bullish_signals || 0;
+        document.getElementById('bearishSignals').innerHTML = sent.bearish_signals || 0;
+        document.getElementById('netSentiment').innerHTML = (sent.net_sentiment || 0).toFixed(1);
+        document.getElementById('volImpact').innerHTML = sent.volatility_impact || 'Moderate';
+        
+        // Market impact
+        const impact = data.market_impact || {};
+        document.getElementById('expectedDirection').innerHTML = impact.direction || 'NEUTRAL';
+        document.getElementById('expectedDirection').className = getSignalClass(impact.direction);
+        document.getElementById('impactConfidence').innerHTML = impact.confidence || 50;
+        document.getElementById('expectedMove').innerHTML = impact.expected_pips || 0;
+        document.getElementById('sentimentRisk').innerHTML = impact.risk_level || 'Medium';
+        
+        // Performance
+        document.getElementById('avgRelevance').innerHTML = sent.avg_relevance || 0;
+        document.getElementById('freshness').innerHTML = sent.freshness || 'Good';
+        document.getElementById('dataSource').innerHTML = data.source || 'NewsAPI';
+        document.getElementById('newsCount').innerHTML = `📰 ${sent.total || 0} articles`;
+        
+        // Sentiment Chart
+        const ctx = document.getElementById('sentimentChart').getContext('2d');
+        if (sentimentChart) sentimentChart.destroy();
+        sentimentChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Negative', 'Neutral'],
+                datasets: [{ data: [pos, neg, neu], backgroundColor: ['#2ecc71', '#e74c3c', '#f1c40f'], borderWidth: 0 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#ccc' } },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} (${((ctx.raw / total) * 100).toFixed(1)}%)` } }
+                }
+            }
+        });
+        
+        // News Feed
+        const articles = data.articles || [];
+        const newsHtml = articles.slice(0, 20).map(article => `
+            <div class="news-item news-${article.sentiment || 'neutral'}" onclick="window.open('${article.url || '#'}', '_blank')">
+                <div class="news-title">${article.title || 'No title'}</div>
+                <div class="news-meta">
+                    <span><i class="fas fa-source"></i> ${article.source || 'Unknown'}</span>
+                    <span><i class="fas fa-clock"></i> ${formatTimestamp(article.published_at)}</span>
+                    <span><i class="fas fa-chart-line"></i> Relevance: ${Math.round((article.relevance || 0.5) * 100)}%</span>
+                    <span class="news-sentiment-badge ${getSentimentClass(article.sentiment)}">
+                        <i class="fas ${article.sentiment === 'positive' ? 'fa-smile' : article.sentiment === 'negative' ? 'fa-frown' : 'fa-meh'}"></i>
+                        ${(article.sentiment || 'NEUTRAL').toUpperCase()}
+                    </span>
+                </div>
+                <div class="news-meta" style="margin-top: 6px;">
+                    <span><i class="fas fa-tag"></i> Topics: ${(article.topics || ['Forex']).slice(0, 3).join(', ')}</span>
+                    <span><i class="fas fa-chart-simple"></i> Impact: ${article.impact || 'Medium'}</span>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('newsFeed').innerHTML = newsHtml || '<div class="insight-text">No news articles available at this time.</div>';
+        
+        // Topic Cloud
+        const topics = data.topics || {};
+        const topicList = Object.entries(topics).sort((a, b) => b[1] - a[1]).slice(0, 15);
+        const topicHtml = topicList.map(([topic, count]) => 
+            `<span class="topic-tag" style="font-size: ${Math.max(10, Math.min(24, 10 + count * 2))}px">
+                ${topic} (${count})
+            </span>`
+        ).join('');
+        document.getElementById('topicCloud').innerHTML = topicHtml || '<span class="insight-text">No topics available</span>';
+    }
+
+    function showPlaceholderData() {
+        // Fallback placeholder data when backend is unavailable
+        document.getElementById('overallSentiment').innerHTML = 'NEUTRAL';
+        document.getElementById('sentimentScore').innerHTML = '0.00';
+        document.getElementById('sentimentConfidence').innerHTML = '50';
+        document.getElementById('sentimentBar').style.width = '50%';
+        document.getElementById('posCount').innerHTML = '0';
+        document.getElementById('negCount').innerHTML = '0';
+        document.getElementById('neuCount').innerHTML = '0';
+        document.getElementById('posPct').innerHTML = '0';
+        document.getElementById('negPct').innerHTML = '0';
+        document.getElementById('neuPct').innerHTML = '0';
+        document.getElementById('totalArticles').innerHTML = '0';
+        document.getElementById('bullishSignals').innerHTML = '0';
+        document.getElementById('bearishSignals').innerHTML = '0';
+        document.getElementById('netSentiment').innerHTML = '0';
+        document.getElementById('expectedDirection').innerHTML = 'NEUTRAL';
+        document.getElementById('impactConfidence').innerHTML = '50';
+        document.getElementById('expectedMove').innerHTML = '0';
+        document.getElementById('newsFeed').innerHTML = '<div class="insight-text">Unable to fetch news. Backend may be unavailable.</div>';
+        document.getElementById('topicCloud').innerHTML = '<span class="insight-text">No topics available</span>';
+    }
+
+    // Initialize
+    refreshAll();
+    document.getElementById('refreshBtn')?.addEventListener('click', refreshAll);
+    setInterval(refreshAll, 60000); // Refresh every 60 seconds
+    setInterval(() => {
+        document.getElementById('liveTimestamp').innerHTML = new Date().toLocaleTimeString();
+    }, 1000);
+</script>
+</body>
+</html>

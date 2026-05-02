@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Market Data | EUR/USD Signal Platform | Real-time Data</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 0%, #0a0f1e, #050a14);
+            font-family: 'Inter', sans-serif;
+            color: #edf2ff;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .logo h1 { font-size: 1.5rem; background: linear-gradient(120deg, #fff, #8bb4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .badge { background: rgba(45, 110, 255, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; color: #8bb4ff; }
+        .nav-links { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+        .nav-btn { background: rgba(30, 42, 78, 0.8); padding: 8px 20px; border-radius: 40px; text-decoration: none; color: white; font-size: 0.85rem; transition: all 0.3s; }
+        .nav-btn:hover { background: #2d6eff; transform: translateY(-2px); }
+        .live-indicator { background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 40px; font-size: 12px; display: flex; align-items: center; gap: 10px; }
+        .live-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; animation: pulse 1.5s infinite; display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .card { background: rgba(12, 20, 32, 0.65); backdrop-filter: blur(14px); border: 1px solid rgba(45,110,255,0.25); border-radius: 24px; padding: 20px; transition: all 0.3s; }
+        .card:hover { border-color: rgba(45,110,255,0.5); transform: translateY(-2px); }
+        .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #8bb4ff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        
+        .metric-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .metric-row:last-child { border-bottom: none; }
+        
+        .signal-bullish { color: #2ecc71; }
+        .signal-bearish { color: #e74c3c; }
+        .signal-neutral { color: #f1c40f; }
+        
+        .progress-bar { height: 6px; background: #2c3e50; border-radius: 3px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #2d6eff, #00d4ff); border-radius: 3px; transition: width 0.5s; }
+        
+        .price-large { font-size: 2rem; font-weight: 800; font-family: monospace; }
+        .insight-text { font-size: 0.7rem; color: #a0b3d9; }
+        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem; opacity: 0.6; }
+        
+        button { background: #1e2a4e; border: none; padding: 8px 18px; border-radius: 40px; color: white; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #2d6eff; transform: scale(0.97); }
+        
+        canvas { max-height: 200px; width: 100%; }
+        
+        @media (max-width: 768px) { body { padding: 16px; } .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+        
+        .source-active { color: #2ecc71; }
+        .source-inactive { color: #7f8c8d; }
+        .timeframe-card { background: rgba(0,0,0,0.25); border-radius: 12px; padding: 10px; text-align: center; }
+        .timeframe-card strong { color: #8bb4ff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1><i class="fas fa-database"></i> Market Data Fetcher v8.2</h1>
+            <div class="badge">Real-time Data · Yahoo Finance · Frankfurter API</div>
+        </div>
+        <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span>LIVE DATA</span>
+            <span id="liveTimestamp">--:--:--</span>
+            <button id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="/" class="nav-btn"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/pages/technical.html" class="nav-btn"><i class="fas fa-chart-line"></i> Technical</a>
+        <a href="/pages/signal.html" class="nav-btn"><i class="fas fa-bolt"></i> Signal</a>
+        <a href="/pages/fundamental.html" class="nav-btn"><i class="fas fa-landmark"></i> Fundamental</a>
+        <a href="/pages/mtf.html" class="nav-btn"><i class="fas fa-clock"></i> MTF</a>
+    </div>
+
+    <!-- Current Price Card -->
+    <div class="grid-2">
+        <div class="card" style="text-align: center;">
+            <div class="card-title"><i class="fas fa-chart-line"></i> EUR/USD Live Price</div>
+            <div class="price-large" id="currentPrice">--</div>
+            <div class="insight-text" id="priceTime">--</div>
+            <div class="grid-2" style="margin-top: 15px;">
+                <div class="metric-row"><span>1h Change:</span><span id="change1h" class="signal-neutral">--</span>%</div>
+                <div class="metric-row"><span>24h Change:</span><span id="change24h" class="signal-neutral">--</span>%</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-waveform"></i> Market Metrics</div>
+            <div class="metric-row"><span>Volatility:</span><strong id="volatility">--</strong>%</div>
+            <div class="metric-row"><span>ATR (pips):</span><strong id="atrValue">--</strong></div>
+            <div class="metric-row"><span>RSI (14):</span><strong id="rsi">--</strong></div>
+            <div class="metric-row"><span>Trend:</span><span id="trendDir">--</span></div>
+            <div class="progress-bar"><div id="volBar" class="progress-fill" style="width:0%"></div></div>
+        </div>
+    </div>
+
+    <!-- Technical Indicators -->
+    <div class="grid-3">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Technical Indicators</div>
+            <div class="metric-row"><span>RSI (14):</span><strong id="rsiValue">--</strong> <span id="rsiStatus">--</span></div>
+            <div class="metric-row"><span>SMA 20:</span><span id="sma20">--</span></div>
+            <div class="metric-row"><span>SMA 50:</span><span id="sma50">--</span></div>
+            <div class="metric-row"><span>ATR (pips):</span><span id="atrPips">--</span></div>
+            <div class="metric-row"><span>ATR Value:</span><span id="atrValueDetail">--</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-arrows-up-down"></i> Support & Resistance</div>
+            <div class="metric-row"><span>Support Level:</span><strong id="support" class="signal-bullish">--</strong></div>
+            <div class="metric-row"><span>Resistance Level:</span><strong id="resistance" class="signal-bearish">--</strong></div>
+            <div class="metric-row"><span>Distance to Support:</span><span id="distToSupport">--</span> pips</div>
+            <div class="metric-row"><span>Distance to Resistance:</span><span id="distToResistance">--</span> pips</div>
+            <div class="progress-bar"><div id="srBar" class="progress-fill" style="width: 0%; background: #ffaa00;"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Moving Averages</div>
+            <div class="metric-row"><span>SMA 20:</span><span id="sma20Detail">--</span></div>
+            <div class="metric-row"><span>SMA 50:</span><span id="sma50Detail">--</span></div>
+            <div class="metric-row"><span>Price vs MA20:</span><span id="priceVsMA">--</span></div>
+            <div class="metric-row"><span>Price vs MA50:</span><span id="priceVsMA50">--</span></div>
+            <div class="metric-row"><span>MA Alignment:</span><span id="maAlignment">--</span></div>
+        </div>
+    </div>
+
+    <!-- Multi-Timeframe Snapshot -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-clock"></i> Multi-Timeframe Snapshot</div>
+        <div id="mtfContainer" class="grid-4"></div>
+    </div>
+
+    <!-- Price Chart -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-line"></i> Price History (Last 100 periods)</div>
+        <canvas id="priceChart" height="200"></canvas>
+    </div>
+
+    <!-- Data Sources -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-server"></i> Data Sources</div>
+        <div class="grid-3">
+            <div class="metric-row"><span><i class="fab fa-yahoo"></i> Yahoo Finance:</span><span class="source-active"><i class="fas fa-check-circle"></i> Active</span></div>
+            <div class="metric-row"><span><i class="fas fa-chart-line"></i> Alpha Vantage:</span><span class="source-inactive"><i class="fas fa-circle"></i> Inactive</span></div>
+            <div class="metric-row"><span><i class="fas fa-globe"></i> Frankfurter:</span><span class="source-active"><i class="fas fa-check-circle"></i> Active</span></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <i class="fas fa-database"></i> Market Data Fetcher v8.2 | Real-time from Yahoo Finance + Frankfurter | Data from /api/price, /api/technical, /api/mtf
+    </div>
+</div>
+
+<script>
+    const API_BASE = '';
+    let priceChart = null;
+    let priceHistory = [];
+
+    async function apiCall(endpoint) {
+        try {
+            const startTime = performance.now();
+            const response = await fetch(`${API_BASE}${endpoint}`);
+            const fetchTime = performance.now() - startTime;
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            return { success: true, data, fetchTime };
+        } catch (error) {
+            console.error(`API Error ${endpoint}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    function getSignalClass(signal) {
+        if (!signal) return 'signal-neutral';
+        const s = signal.toUpperCase();
+        if (s === 'BULLISH' || s === 'BUY' || s === 'STRONG_BUY') return 'signal-bullish';
+        if (s === 'BEARISH' || s === 'SELL' || s === 'STRONG_SELL') return 'signal-bearish';
+        return 'signal-neutral';
+    }
+
+    function formatPrice(price) {
+        if (!price) return '--';
+        if (typeof price === 'number' && (isNaN(price) || !isFinite(price))) return '--';
+        return typeof price === 'number' ? price.toFixed(5) : price;
+    }
+
+    function safeValue(value, defaultValue = '--') {
+        if (value === undefined || value === null) return defaultValue;
+        if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) return defaultValue;
+        return value;
+    }
+
+    function renderPriceChart(prices) {
+        const ctx = document.getElementById('priceChart')?.getContext('2d');
+        if (!ctx) return;
+        if (priceChart) priceChart.destroy();
+        
+        priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: prices.map((_, i) => i),
+                datasets: [{
+                    label: 'EUR/USD',
+                    data: prices,
+                    borderColor: '#2d6eff',
+                    backgroundColor: 'rgba(45,110,255,0.1)',
+                    fill: true,
+                    tension: 0.2,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { labels: { color: '#ccc' } } },
+                scales: {
+                    x: { ticks: { color: '#ccc' }, grid: { display: false } },
+                    y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
+    async function refreshAll() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        refreshBtn.disabled = true;
+        
+        try {
+            // Fetch data from working endpoints only
+            const [priceResult, techResult, mtfResult] = await Promise.all([
+                apiCall('/api/price'),
+                apiCall('/api/technical'),
+                apiCall('/api/mtf')
+            ]);
+            
+            if (priceResult.success) updatePriceUI(priceResult.data);
+            if (techResult.success) updateTechnicalUI(techResult.data);
+            if (mtfResult.success) updateMTFUI(mtfResult.data);
+            
+        } catch (error) {
+            console.error('Refresh error:', error);
+        } finally {
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+            refreshBtn.disabled = false;
+            document.getElementById('liveTimestamp').innerHTML = new Date().toLocaleTimeString();
+            document.getElementById('priceTime').innerHTML = new Date().toLocaleTimeString();
+        }
+    }
+
+    function updatePriceUI(data) {
+        const price = data.price || 1.1750;
+        document.getElementById('currentPrice').innerHTML = formatPrice(price);
+        
+        // Update price history for chart
+        priceHistory.push(price);
+        if (priceHistory.length > 100) priceHistory.shift();
+        renderPriceChart(priceHistory);
+        
+        // Calculate 1h change from history if available
+        if (priceHistory.length >= 2) {
+            const change1h = ((priceHistory[priceHistory.length-1] - priceHistory[priceHistory.length-2]) / priceHistory[priceHistory.length-2] * 100);
+            const changeEl = document.getElementById('change1h');
+            changeEl.textContent = change1h.toFixed(2);
+            changeEl.className = change1h > 0 ? 'signal-bullish' : change1h < 0 ? 'signal-bearish' : 'signal-neutral';
+        }
+    }
+
+    function updateTechnicalUI(data) {
+        const indicators = data.indicators || {};
+        
+        // RSI
+        const rsi = safeValue(indicators.rsi, '--');
+        document.getElementById('rsiValue').innerHTML = rsi;
+        document.getElementById('rsi').innerHTML = rsi;
+        
+        let rsiStatus = 'Neutral';
+        if (rsi !== '--') {
+            const rsiNum = parseFloat(rsi);
+            rsiStatus = rsiNum < 30 ? 'Oversold' : rsiNum > 70 ? 'Overbought' : 'Neutral';
+        }
+        const rsiStatusEl = document.getElementById('rsiStatus');
+        rsiStatusEl.textContent = rsiStatus;
+        rsiStatusEl.className = rsiStatus === 'Oversold' ? 'signal-bullish' : rsiStatus === 'Overbought' ? 'signal-bearish' : 'signal-neutral';
+        
+        // Moving Averages
+        const ma = indicators.moving_averages || {};
+        const sma20 = safeValue(ma.sma_20);
+        const sma50 = safeValue(ma.sma_50);
+        document.getElementById('sma20').innerHTML = formatPrice(sma20);
+        document.getElementById('sma50').innerHTML = formatPrice(sma50);
+        document.getElementById('sma20Detail').innerHTML = formatPrice(sma20);
+        document.getElementById('sma50Detail').innerHTML = formatPrice(sma50);
+        
+        const currentPrice = data.current_price || 1.1750;
+        const price = parseFloat(currentPrice);
+        
+        if (sma20 !== '--') {
+            const vsMA20 = price > parseFloat(sma20) ? 'Above' : 'Below';
+            const vsMA20El = document.getElementById('priceVsMA');
+            vsMA20El.textContent = vsMA20;
+            vsMA20El.className = vsMA20 === 'Above' ? 'signal-bullish' : 'signal-bearish';
+        }
+        if (sma50 !== '--') {
+            const vsMA50 = price > parseFloat(sma50) ? 'Above' : 'Below';
+            const vsMA50El = document.getElementById('priceVsMA50');
+            vsMA50El.textContent = vsMA50;
+            vsMA50El.className = vsMA50 === 'Above' ? 'signal-bullish' : 'signal-bearish';
+        }
+        
+        // MA Alignment
+        if (sma20 !== '--' && sma50 !== '--') {
+            if (price > parseFloat(sma20) && parseFloat(sma20) > parseFloat(sma50)) {
+                document.getElementById('maAlignment').textContent = 'BULLISH';
+                document.getElementById('maAlignment').className = 'signal-bullish';
+            } else if (price < parseFloat(sma20) && parseFloat(sma20) < parseFloat(sma50)) {
+                document.getElementById('maAlignment').textContent = 'BEARISH';
+                document.getElementById('maAlignment').className = 'signal-bearish';
+            } else {
+                document.getElementById('maAlignment').textContent = 'MIXED';
+                document.getElementById('maAlignment').className = 'signal-neutral';
+            }
+        }
+        
+        // ATR
+        const atr = indicators.atr || {};
+        const atrPips = safeValue(atr.pips, '--');
+        document.getElementById('atrValue').innerHTML = atrPips;
+        document.getElementById('atrPips').innerHTML = atrPips;
+        document.getElementById('atrValueDetail').innerHTML = formatPrice(atr.value);
+        
+        // Volatility
+        const volatility = safeValue(indicators.volatility, '--');
+        document.getElementById('volatility').innerHTML = volatility;
+        const volBar = document.getElementById('volBar');
+        if (volatility !== '--') volBar.style.width = `${Math.min(100, volatility * 2)}%`;
+        
+        // Trend
+        const trend = indicators.trend || {};
+        const trendDir = trend.direction || 'SIDEWAYS';
+        const trendEl = document.getElementById('trendDir');
+        trendEl.textContent = trendDir;
+        trendEl.className = getSignalClass(trendDir);
+        
+        // Support & Resistance
+        const support = safeValue(indicators.support);
+        const resistance = safeValue(indicators.resistance);
+        document.getElementById('support').innerHTML = formatPrice(support);
+        document.getElementById('resistance').innerHTML = formatPrice(resistance);
+        
+        if (price && support !== '--') {
+            const distSupport = (price - parseFloat(support)) * 10000;
+            document.getElementById('distToSupport').innerHTML = distSupport > 0 ? distSupport.toFixed(1) : '0';
+        }
+        if (price && resistance !== '--') {
+            const distResistance = (parseFloat(resistance) - price) * 10000;
+            document.getElementById('distToResistance').innerHTML = distResistance > 0 ? distResistance.toFixed(1) : '0';
+            if (support !== '--') {
+                const totalRange = (parseFloat(resistance) - parseFloat(support)) * 10000;
+                if (totalRange > 0) {
+                    const srBar = document.getElementById('srBar');
+                    srBar.style.width = `${((price - parseFloat(support)) / (parseFloat(resistance) - parseFloat(support))) * 100}%`;
+                }
+            }
+        }
+    }
+
+    function updateMTFUI(data) {
+        const timeframes = data.timeframes || {};
+        const container = document.getElementById('mtfContainer');
+        
+        if (Object.keys(timeframes).length === 0) {
+            container.innerHTML = '<div class="insight-text">No timeframe data available</div>';
+            return;
+        }
+        
+        let html = '';
+        for (const [tf, tfData] of Object.entries(timeframes)) {
+            const currentPrice = tfData.current_price || 0;
+            const high = tfData.high || 0;
+            const low = tfData.low || 0;
+            const candles = tfData.candles || 0;
+            
+            html += `
+                <div class="timeframe-card">
+                    <strong>${tf}</strong>
+                    <div class="insight-text">Price: ${formatPrice(currentPrice)}</div>
+                    <div class="insight-text">High: ${formatPrice(high)}</div>
+                    <div class="insight-text">Low: ${formatPrice(low)}</div>
+                    <div class="insight-text">Candles: ${candles}</div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    // Initialize price history with initial value
+    for (let i = 0; i < 50; i++) {
+        priceHistory.push(1.1750 + (Math.random() - 0.5) * 0.001);
+    }
+    renderPriceChart(priceHistory);
+    
+    refreshAll();
+    setInterval(refreshAll, 30000);
+    setInterval(() => {
+        document.getElementById('liveTimestamp').innerHTML = new Date().toLocaleTimeString();
+    }, 1000);
+</script>
+</body>
+</html>

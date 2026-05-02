@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+ENV/
+*.log
+platform.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+cache/
+news_cache/
+logs/
+trained_models/
+config_backups/
+scalers/
+training_results/
+*.db
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Virtual Environment
+venv/
+lib/
+Lib/
+Scripts/
+Include/
+share/
+pyvenv.cfg
+
+# Frontend (if any)
+node_modules/
+dist/
+build/

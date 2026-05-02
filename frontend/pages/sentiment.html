@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EUR/USD | Fundamental + Regime + Sentiment | Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 30%, #0a0e1a, #03060c);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+            color: #eef2ff;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(12, 20, 32, 0.7);
+            backdrop-filter: blur(14px);
+            border-radius: 24px;
+            border: 1px solid rgba(45, 110, 255, 0.25);
+            box-shadow: 0 20px 40px -12px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        .glass-panel:hover {
+            border-color: rgba(45, 110, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .dashboard-container { max-width: 1600px; margin: 0 auto; }
+        .hero-header {
+            background: linear-gradient(115deg, #0b1120, #111827);
+            border-radius: 24px;
+            margin-bottom: 20px;
+            padding: 1rem 1.5rem;
+            border-bottom: 3px solid #2d6eff;
+        }
+        .badge-premium {
+            background: linear-gradient(135deg, #f5af19, #f12711);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-real {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            margin-left: 8px;
+        }
+        h1 { font-size: 1.3rem; font-weight: 700; background: linear-gradient(130deg, #ffffff, #8bb4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .grid-responsive { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; margin-bottom: 1.2rem; }
+        .grid-3cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin-bottom: 1.2rem; }
+        .signal-bullish { color: #2ecc71; font-weight: 700; }
+        .signal-bearish { color: #e74c3c; font-weight: 700; }
+        .signal-neutral { color: #f1c40f; font-weight: 700; }
+        .regime-badge {
+            background: #1e2a4e;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            display: inline-block;
+        }
+        button {
+            background: #1e2a4e;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background: #2d6eff; transform: scale(0.97); }
+        .insight-text { font-size: 0.7rem; color: #b9c7e9; }
+        hr { border-color: rgba(45,110,255,0.2); margin: 0.6rem 0; }
+        .footer-note { text-align: center; font-size: 0.6rem; margin-top: 1.5rem; opacity: 0.5; }
+        canvas { max-height: 200px; width: 100%; }
+        .gauge-container { position: relative; margin: 10px auto; width: 120px; height: 120px; }
+        .live-indicator { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 40px; }
+        .live-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; animation: pulse 1.5s infinite; display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .metric-row:last-child { border-bottom: none; }
+        .progress-bar { height: 4px; background: #2c3e50; border-radius: 2px; overflow: hidden; margin: 6px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #2d6eff, #00d4ff); border-radius: 2px; transition: width 0.5s; }
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.8rem; margin-bottom: 1rem; }
+        .mini-card { background: rgba(0,0,0,0.35); border-radius: 12px; padding: 0.6rem; border: 1px solid rgba(45,110,255,0.2); transition: all 0.3s; }
+        .mini-card:hover { border-color: rgba(45,110,255,0.5); transform: translateY(-2px); }
+        @media (max-width: 768px) { body { padding: 12px; } }
+        .nav-links { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .nav-btn { background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 40px; text-decoration: none; color: #eef2ff; font-size: 11px; transition: all 0.3s; }
+        .nav-btn:hover { background: #2d6eff; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="hero-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <span class="badge-premium"><i class="fas fa-brain"></i> ENTERPRISE SUITE</span>
+                <span class="badge-real"><i class="fas fa-plug"></i> REAL DATA</span>
+                <h1 style="margin-top: 4px;">EUR/USD · Fundamental | Regime | Sentiment Trinity</h1>
+                <p class="insight-text">Central Bank · GPR · ESI · Carry · Market Regime · Sentiment Analysis | Live from Backend</p>
+            </div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span>LIVE</span>
+                <span id="timestampLive">--:--:--</span>
+                <button id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-links">
+        <a href="/" class="nav-btn"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/pages/technical.html" class="nav-btn"><i class="fas fa-chart-line"></i> Technical</a>
+        <a href="/pages/signal.html" class="nav-btn"><i class="fas fa-bolt"></i> Signal</a>
+        <a href="/pages/mtf.html" class="nav-btn"><i class="fas fa-clock"></i> MTF</a>
+        <a href="/pages/trend.html" class="nav-btn"><i class="fas fa-chart-simple"></i> Trend</a>
+        <a href="/pages/risk.html" class="nav-btn"><i class="fas fa-shield-alt"></i> Risk</a>
+    </div>
+
+    <!-- TOP ROW: Composite Score + Sentiment Gauge + Regime Summary -->
+    <div class="grid-responsive">
+        <!-- Composite Score Card -->
+        <div class="glass-panel" style="padding: 1rem; text-align:center;">
+            <h3><i class="fas fa-chart-simple"></i> Composite Score</h3>
+            <div id="compositeValue" style="font-size: 2rem; font-weight: 800; margin: 10px 0;">--</div>
+            <div class="progress-bar"><div id="compositeBar" class="progress-fill" style="width:0%"></div></div>
+            <div id="compositeBias" style="font-size:1rem; font-weight:700;">—</div>
+            <div id="compositeConfidence" class="insight-text">Confidence: --%</div>
+            <div id="componentBreakdown" class="insight-text"></div>
+        </div>
+
+        <!-- Sentiment Gauge Card -->
+        <div class="glass-panel" style="padding: 1rem; text-align:center;">
+            <h3><i class="fas fa-chart-line"></i> Sentiment Analysis</h3>
+            <div class="gauge-container">
+                <canvas id="sentimentGaugeCanvas" width="120" height="120"></canvas>
+            </div>
+            <div id="overallSentiment" style="font-size:1.1rem; font-weight:800; margin: 5px 0;">—</div>
+            <div class="metric-row"><span>Score:</span><span id="sentimentScore">--</span></div>
+            <div class="metric-row"><span>Confidence:</span><span id="sentimentConfidence">--</span>%</div>
+            <div class="metric-row"><span>Momentum:</span><span id="sentimentMomentum">--</span></div>
+        </div>
+
+        <!-- Market Regime Card -->
+        <div class="glass-panel" style="padding: 1rem;">
+            <h3><i class="fas fa-waveform"></i> Market Regime</h3>
+            <div><span class="regime-badge" id="regimeName">—</span> <span id="regimeStrength"></span></div>
+            <div class="metric-row"><span>Confidence:</span><span id="regimeConfidence">--</span>%</div>
+            <div class="metric-row"><span>Trend Direction:</span><span id="trendDir">--</span></div>
+            <div class="metric-row"><span>Strategy:</span><strong id="suggestedStrategy">--</strong></div>
+            <div class="metric-row"><span>Risk Multiplier:</span><span id="riskMult">--</span>x</div>
+            <div class="insight-text" id="regimeDescription"></div>
+            <hr>
+            <div class="metric-row"><span>Trading Signal:</span><strong id="tradeSignal">--</strong></div>
+            <div class="metric-row"><span>Position Size:</span><span id="recPosition">--</span> lots</div>
+            <div class="metric-row"><span>Conviction:</span><span id="recConviction">--</span>%</div>
+        </div>
+    </div>
+
+    <!-- Fundamental Details Row -->
+    <div class="grid-3cols">
+        <div class="glass-panel" style="padding: 0.8rem;">
+            <h4><i class="fas fa-globe"></i> Geopolitical Risk</h4>
+            <div class="metric-row"><span>GPR Index:</span><strong id="gprValue">--</strong></div>
+            <div class="metric-row"><span>Risk Regime:</span><span id="riskRegimeText">--</span></div>
+            <div class="metric-row"><span>Risk Premium:</span><span id="riskPremiumPips">--</span> pips</div>
+            <div id="activeRisksList" style="margin-top: 6px;"></div>
+        </div>
+
+        <div class="glass-panel" style="padding: 0.8rem;">
+            <h4><i class="fas fa-chart-line"></i> Economic Surprise Index</h4>
+            <div class="metric-row"><span>🇺🇸 US ESI:</span><strong id="usEsi">--</strong></div>
+            <div class="metric-row"><span>🇪🇺 EU ESI:</span><strong id="euEsi">--</strong></div>
+            <div class="metric-row"><span>Divergence:</span><span id="esiDivergence">--</span></div>
+            <div class="metric-row"><span>Market Impact:</span><span id="marketImpact">--</span></div>
+        </div>
+
+        <div class="glass-panel" style="padding: 0.8rem;">
+            <h4><i class="fas fa-coins"></i> Central Bank & Carry</h4>
+            <div class="metric-row"><span>Fed-ECB Diff:</span><strong id="rateDiff">--</strong>%</div>
+            <div class="metric-row"><span>Policy Divergence:</span><span id="policyDivergence">--</span></div>
+            <div class="metric-row"><span>Carry Yield:</span><span id="carryYield">--</span> bps</div>
+            <div class="metric-row"><span>Annual Return:</span><span id="carryAnnual">--</span>%</div>
+            <div id="carryAttractive">—</div>
+        </div>
+    </div>
+
+    <!-- Sentiment Charts Section -->
+    <div class="glass-panel" style="padding: 0.8rem; margin-bottom: 1rem;">
+        <h3><i class="fas fa-chart-pie"></i> Sentiment Analytics</h3>
+        <div class="chart-grid" id="sentimentChartsGrid">
+            <div class="insight-text" style="text-align:center; padding:20px;">Loading sentiment charts...</div>
+        </div>
+    </div>
+
+    <!-- Regime Charts Section -->
+    <div class="glass-panel" style="padding: 0.8rem;">
+        <h3><i class="fas fa-chart-line"></i> Market Regime Analytics</h3>
+        <div class="chart-grid" id="regimeChartsGrid">
+            <div class="insight-text" style="text-align:center; padding:20px;">Loading regime charts...</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <i class="fas fa-chart-line"></i> Real data from backend | Fundamental v8.0 | Market Regime v6.2 | Sentiment v5.0 | Auto-refresh every 30s
+    </div>
+</div>
+
+<script>
+    const API_BASE = '';
+    let chartInstances = {};
+    let sentimentGaugeChart = null;
+
+    async function apiCall(endpoint) {
+        try {
+            const response = await fetch(`${API_BASE}${endpoint}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`API Error ${endpoint}:`, error);
+            return null;
+        }
+    }
+
+    function destroyChart(id) {
+        if (chartInstances[id]) {
+            try { chartInstances[id].destroy(); } catch(e) {}
+            delete chartInstances[id];
+        }
+    }
+
+    function getSignalClass(value) {
+        if (typeof value === 'string') {
+            const upper = value.toUpperCase();
+            if (upper.includes('BULL') || upper.includes('BUY')) return 'signal-bullish';
+            if (upper.includes('BEAR') || upper.includes('SELL')) return 'signal-bearish';
+            return 'signal-neutral';
+        }
+        if (typeof value === 'number') {
+            return value > 0.2 ? 'signal-bullish' : value < -0.2 ? 'signal-bearish' : 'signal-neutral';
+        }
+        return 'signal-neutral';
+    }
+
+    async function refreshAll() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        refreshBtn.disabled = true;
+        
+        try {
+            const [fundamental, regime, sentiment] = await Promise.all([
+                apiCall('/api/fundamental'),
+                apiCall('/api/regime'),
+                apiCall('/api/sentiment')
+            ]);
+            
+            if (fundamental) updateFundamentalUI(fundamental);
+            if (regime) updateRegimeUI(regime);
+            if (sentiment) updateSentimentUI(sentiment);
+            
+        } catch (error) {
+            console.error('Refresh error:', error);
+        } finally {
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+            refreshBtn.disabled = false;
+            document.getElementById('timestampLive').innerHTML = new Date().toLocaleTimeString();
+        }
+    }
+
+    function updateFundamentalUI(data) {
+        // Composite Score
+        const composite = data.composite_score || {};
+        const score = composite.score || 50;
+        const bias = composite.bias || 'NEUTRAL';
+        const confidence = composite.confidence || 50;
+        
+        document.getElementById('compositeValue').innerHTML = score;
+        document.getElementById('compositeBar').style.width = `${score}%`;
+        document.getElementById('compositeBias').innerHTML = bias;
+        document.getElementById('compositeBias').className = getSignalClass(bias);
+        document.getElementById('compositeConfidence').innerHTML = `Confidence: ${confidence}%`;
+        
+        const components = composite.components || {};
+        document.getElementById('componentBreakdown').innerHTML = `Policy: ${components.monetary_policy || 0}% | GPR: ${components.geopolitical_risk || 0}%`;
+        
+        // Central Bank
+        const cb = data.central_bank_policy || {};
+        document.getElementById('rateDiff').innerHTML = cb.current_rate_diff || '--';
+        document.getElementById('policyDivergence').innerHTML = cb.policy_divergence || '--';
+        
+        // Geopolitical
+        const geo = data.geopolitical_risk || {};
+        document.getElementById('gprValue').innerHTML = geo.gpr_index || '--';
+        document.getElementById('riskRegimeText').innerHTML = geo.risk_regime || 'MODERATE';
+        document.getElementById('riskPremiumPips').innerHTML = geo.risk_premium_pips || '--';
+        
+        const activeRisks = geo.key_risks || [];
+        const risksHtml = activeRisks.slice(0, 2).map(r => `<div class="insight-text">⚠️ ${r.name} (${r.severity})</div>`).join('');
+        document.getElementById('activeRisksList').innerHTML = risksHtml || '<div class="insight-text">No active risks</div>';
+        
+        // ESI
+        const esi = data.economic_surprise_index || {};
+        document.getElementById('usEsi').innerHTML = esi.US?.index || '--';
+        document.getElementById('euEsi').innerHTML = esi.EU?.index || '--';
+        document.getElementById('esiDivergence').innerHTML = esi.divergence || '--';
+        
+        const impact = esi.market_impact || {};
+        document.getElementById('marketImpact').innerHTML = impact.impact || '--';
+        
+        // Carry Trade
+        const carry = data.carry_trade_analysis || {};
+        document.getElementById('carryYield').innerHTML = carry.carry_yield_bps || '--';
+        document.getElementById('carryAnnual').innerHTML = carry.annualized_return || '--';
+        document.getElementById('carryAttractive').innerHTML = carry.carry_trade_attractive ? '✅ Carry Attractive' : '⚖️ Carry Neutral';
+        document.getElementById('carryAttractive').className = carry.carry_trade_attractive ? 'signal-bullish' : 'signal-neutral';
+    }
+
+    function updateRegimeUI(data) {
+        const regime = data.regime || 'UNKNOWN';
+        const confidence = data.confidence || 50;
+        const strength = data.trend_strength || 0;
+        
+        document.getElementById('regimeName').innerHTML = regime.replace(/_/g, ' ').toUpperCase();
+        document.getElementById('regimeStrength').innerHTML = `Strength: ${strength}%`;
+        document.getElementById('regimeConfidence').innerHTML = confidence;
+        document.getElementById('trendDir').innerHTML = data.trend_direction || 'SIDEWAYS';
+        document.getElementById('trendDir').className = getSignalClass(data.trend_direction);
+        document.getElementById('suggestedStrategy').innerHTML = data.strategy || 'Balanced';
+        document.getElementById('riskMult').innerHTML = data.risk_multiplier || '1.0';
+        document.getElementById('regimeDescription').innerHTML = data.description || 'Analyzing market conditions';
+        
+        // Trading signal from regime
+        let tradeSignal = 'HOLD';
+        let positionSize = 0;
+        let conviction = 0;
+        
+        if (regime === 'TRENDING_UP' && confidence > 60) {
+            tradeSignal = 'BUY';
+            positionSize = 0.6;
+            conviction = confidence;
+        } else if (regime === 'TRENDING_DOWN' && confidence > 60) {
+            tradeSignal = 'SELL';
+            positionSize = 0.6;
+            conviction = confidence;
+        } else if (regime === 'HIGH_VOLATILITY') {
+            tradeSignal = 'REDUCE';
+            positionSize = 0.2;
+            conviction = 70;
+        } else if (regime === 'LOW_VOLATILITY') {
+            tradeSignal = 'CONSIDER';
+            positionSize = 0.4;
+            conviction = 60;
+        }
+        
+        document.getElementById('tradeSignal').innerHTML = tradeSignal;
+        document.getElementById('tradeSignal').className = getSignalClass(tradeSignal === 'BUY' ? 'BULLISH' : tradeSignal === 'SELL' ? 'BEARISH' : 'NEUTRAL');
+        document.getElementById('recPosition').innerHTML = positionSize.toFixed(2);
+        document.getElementById('recConviction').innerHTML = Math.round(conviction);
+        
+        // Render regime charts if available
+        if (data.charts) {
+            renderRegimeCharts(data);
+        }
+    }
+
+    function updateSentimentUI(data) {
+        const overall = data.overall_sentiment || 'NEUTRAL';
+        const score = data.sentiment_score || 0;
+        const confidence = (data.confidence || 0.5) * 100;
+        
+        document.getElementById('overallSentiment').innerHTML = overall.replace(/_/g, ' ').toUpperCase();
+        document.getElementById('overallSentiment').className = getSignalClass(score);
+        document.getElementById('sentimentScore').innerHTML = score.toFixed(3);
+        document.getElementById('sentimentConfidence').innerHTML = Math.round(confidence);
+        
+        const momentum = data.sentiment_momentum || {};
+        document.getElementById('sentimentMomentum').innerHTML = `${momentum.trend || 'stable'} (${(momentum.momentum || 0).toFixed(3)})`;
+        
+        // Sentiment Gauge
+        if (sentimentGaugeChart) sentimentGaugeChart.destroy();
+        const gaugeCtx = document.getElementById('sentimentGaugeCanvas').getContext('2d');
+        const percentVal = ((score + 1) / 2) * 100;
+        sentimentGaugeChart = new Chart(gaugeCtx, {
+            type: 'doughnut',
+            data: { labels: ['Sentiment', ''], datasets: [{ data: [percentVal, 100 - percentVal], backgroundColor: [percentVal > 60 ? '#00ff88' : percentVal < 40 ? '#ff4444' : '#ffaa00', '#2c3e50'], borderWidth: 0 }] },
+            options: { cutout: '70%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: () => `Sentiment: ${score.toFixed(2)}` } } }, responsive: true, maintainAspectRatio: true }
+        });
+        
+        // Render sentiment charts
+        if (data.charts) {
+            renderSentimentCharts(data);
+        } else {
+            document.getElementById('sentimentChartsGrid').innerHTML = '<div class="insight-text" style="text-align:center; padding:20px;">No chart data available</div>';
+        }
+    }
+
+    function renderSentimentCharts(data) {
+        const container = document.getElementById('sentimentChartsGrid');
+        if (!container || !data.charts) return;
+        
+        const chartKeys = ['timeline', 'radar', 'distribution', 'momentum', 'confidence_trend'];
+        container.innerHTML = '';
+        
+        chartKeys.forEach(key => {
+            const ch = data.charts[key];
+            if (!ch) return;
+            const card = document.createElement('div');
+            card.className = 'mini-card';
+            card.innerHTML = `<div style="font-weight:600; margin-bottom:4px; font-size:0.7rem;">${ch.title || key}</div><canvas id="sent_chart_${key}" width="280" height="140" style="width:100%; height:140px;"></canvas>`;
+            container.appendChild(card);
+        });
+        
+        setTimeout(() => {
+            chartKeys.forEach(key => {
+                const ch = data.charts[key];
+                const canvas = document.getElementById(`sent_chart_${key}`);
+                if (!canvas || !ch) return;
+                destroyChart(`sent_${key}`);
+                const ctx = canvas.getContext('2d');
+                
+                try {
+                    if (ch.type === 'line') {
+                        chartInstances[`sent_${key}`] = new Chart(ctx, {
+                            type: 'line',
+                            data: { labels: ch.x_axis || [], datasets: [{ label: 'Value', data: ch.data || [], borderColor: '#2d6eff', fill: false, tension: 0.2 }] }
+                        });
+                    } else if (ch.type === 'radar' && ch.categories) {
+                        chartInstances[`sent_${key}`] = new Chart(ctx, {
+                            type: 'radar',
+                            data: { labels: ch.categories, datasets: [{ label: 'Score', data: ch.data || [], backgroundColor: 'rgba(45,110,255,0.2)', borderColor: '#2d6eff' }] }
+                        });
+                    } else if (ch.type === 'pie') {
+                        chartInstances[`sent_${key}`] = new Chart(ctx, {
+                            type: 'pie',
+                            data: { labels: ch.data?.map(d => d.name) || [], datasets: [{ data: ch.data?.map(d => d.value) || [], backgroundColor: ['#00ff88', '#ff4444', '#ffaa00'] }] }
+                        });
+                    }
+                } catch (e) { console.error(`Chart ${key} error:`, e); }
+            });
+        }, 50);
+    }
+
+    function renderRegimeCharts(data) {
+        const container = document.getElementById('regimeChartsGrid');
+        if (!container || !data.charts) return;
+        
+        const chartKeys = ['regime_timeline', 'regime_distribution', 'confidence_trend', 'regime_gauge', 'strength_confidence'];
+        container.innerHTML = '';
+        
+        chartKeys.forEach(key => {
+            const ch = data.charts[key];
+            if (!ch) return;
+            const card = document.createElement('div');
+            card.className = 'mini-card';
+            card.innerHTML = `<div style="font-weight:600; margin-bottom:4px; font-size:0.7rem;">${ch.title || key}</div><canvas id="reg_chart_${key}" width="280" height="140" style="width:100%; height:140px;"></canvas>`;
+            container.appendChild(card);
+        });
+        
+        setTimeout(() => {
+            chartKeys.forEach(key => {
+                const ch = data.charts[key];
+                const canvas = document.getElementById(`reg_chart_${key}`);
+                if (!canvas || !ch) return;
+                destroyChart(`reg_${key}`);
+                const ctx = canvas.getContext('2d');
+                
+                try {
+                    if (ch.type === 'line' || ch.type === 'timeline') {
+                        const dataArr = ch.data?.map(d => d.confidence ?? d.score ?? d.value) || [];
+                        chartInstances[`reg_${key}`] = new Chart(ctx, {
+                            type: 'line',
+                            data: { labels: ch.data?.map((_, i) => i) || [], datasets: [{ label: ch.title, data: dataArr, borderColor: '#2d6eff', fill: false }] }
+                        });
+                    } else if (ch.type === 'pie') {
+                        chartInstances[`reg_${key}`] = new Chart(ctx, {
+                            type: 'pie',
+                            data: { labels: ch.data?.map(d => d.name) || [], datasets: [{ data: ch.data?.map(d => d.value) || [], backgroundColor: ['#2d6eff', '#f5af19', '#e74c3c'] }] }
+                        });
+                    } else if (ch.type === 'bar') {
+                        chartInstances[`reg_${key}`] = new Chart(ctx, {
+                            type: 'bar',
+                            data: { labels: ch.data?.map(d => d.feature ?? d.name) || [], datasets: [{ data: ch.data?.map(d => d.imp ?? d.value) || [], backgroundColor: '#f5af19' }] }
+                        });
+                    } else if (ch.type === 'gauge') {
+                        chartInstances[`reg_${key}`] = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: { labels: ['Strength', ''], datasets: [{ data: [ch.value, 100 - ch.value], backgroundColor: ['#2d6eff', '#2c3e50'], borderWidth: 0 }] }
+                        });
+                    }
+                } catch (e) { console.error(`Regime chart ${key} error:`, e); }
+            });
+        }, 50);
+    }
+
+    // Initialize
+    refreshAll();
+    setInterval(refreshAll, 30000);
+    setInterval(() => {
+        document.getElementById('timestampLive').innerHTML = new Date().toLocaleTimeString();
+    }, 1000);
+</script>
+</body>
+</html>

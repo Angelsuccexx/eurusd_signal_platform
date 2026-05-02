@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EUR/USD Signal Platform | Professional Trading Dashboard</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js with adapters -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.0/dist/chartjs-chart-financial.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>EUR/USD <span class="highlight">Signal Platform</span></span>
+            </div>
+            
+            <div class="live-price-card">
+                <div class="price-label">EUR/USD Live</div>
+                <div class="price-value" id="eurusd-price">--</div>
+                <div class="price-change" id="eurusd-change">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>--</span>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn-refresh" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Refresh</span>
+                </button>
+                <button class="btn-export" id="exportBtn" style="background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(0,212,255,0.3); border-radius: 40px; padding: 8px 16px; color: #8a8fa8; cursor: pointer;">
+                    <i class="fas fa-download"></i>
+                    <span>Export</span>
+                </button>
+                <button class="btn-fullscreen" id="fullscreenBtn" style="background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(0,212,255,0.3); border-radius: 40px; padding: 8px 16px; color: #8a8fa8; cursor: pointer;">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <div class="time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <!-- Live Forex News Ticker (Feature 4) -->
+        <div class="news-ticker" style="background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,0,0,0.3)); border-radius: 12px; margin-bottom: 20px; padding: 8px 16px; display: flex; align-items: center; gap: 16px; backdrop-filter: blur(10px);">
+            <div class="ticker-label" style="background: linear-gradient(135deg, #ff4444, #ffaa00); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;">
+                <i class="fas fa-newspaper"></i> LIVE
+            </div>
+            <div class="ticker-content" style="flex: 1; overflow: hidden;">
+                <marquee behavior="scroll" direction="left" scrollamount="2" style="color: #a0b3d9; font-size: 12px;">
+                    <span>💱 EUR/USD trading at <span id="ticker-price">--</span></span>
+                    <span style="margin: 0 20px;">•</span>
+                    <span>🏦 ECB signals potential rate cut in June</span>
+                    <span style="margin: 0 20px;">•</span>
+                    <span>📊 US Non-Farm Payrolls expected at 180K</span>
+                    <span style="margin: 0 20px;">•</span>
+                    <span>📈 Fed maintains interest rates at 5.5%</span>
+                    <span style="margin: 0 20px;">•</span>
+                    <span>🇪🇺 German inflation data coming this week</span>
+                </marquee>
+            </div>
+        </div>
+
+        <!-- Main Signal Banner -->
+        <section class="signal-banner" id="signal-banner">
+            <div class="signal-glow"></div>
+            <div class="signal-content">
+                <div class="signal-label">CURRENT RECOMMENDATION</div>
+                <div class="signal-type" id="main-signal">NEUTRAL</div>
+                <div class="signal-confidence">
+                    <span>Confidence</span>
+                    <span id="signal-confidence">50%</span>
+                </div>
+            </div>
+            <div class="signal-stats">
+                <div class="stat-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <span>Risk Level</span>
+                        <strong id="signal-risk">MODERATE</strong>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <span>Timeframe</span>
+                        <strong>Multi-Timeframe</strong>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-chart-simple"></i>
+                    <div>
+                        <span>Updated</span>
+                        <strong id="update-time">Just now</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trade Idea of the Day (Feature 12) -->
+        <section class="trade-idea-section" style="margin-bottom: 24px;">
+            <div class="trade-idea-card" style="background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,0,0,0.3)); border-radius: 20px; padding: 20px; border: 1px solid rgba(0,212,255,0.3);">
+                <div class="trade-idea-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <i class="fas fa-lightbulb" style="color: #ffaa00; font-size: 20px;"></i>
+                    <span style="font-size: 11px; color: #ffaa00; letter-spacing: 2px;">TRADE IDEA OF THE DAY</span>
+                </div>
+                <div class="trade-idea-content" id="trade-idea" style="margin-bottom: 15px;">
+                    <p style="font-size: 14px; color: #a0b3d9;">Based on technical analysis, consider LONG entry on pullback to support zone at 1.1720 with RSI showing oversold conditions...</p>
+                </div>
+                <div class="trade-idea-footer" style="display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px;">
+                    <span>📊 Setup: <strong id="trade-setup" style="color: #00ff88;">Limit Buy</strong></span>
+                    <span>🎯 Target: <strong id="trade-target" style="color: #00ff88;">+50 pips</strong></span>
+                    <span>🛑 Stop: <strong id="trade-stop" style="color: #ff4444;">-25 pips</strong></span>
+                    <span>📈 R/R: <strong id="trade-rr" style="color: #ffaa00;">2:1</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Real Candlestick Chart Section -->
+        <section class="chart-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> EUR/USD Real-Time Chart</h2>
+                <p>Live price action - Candlestick chart (1H timeframe)</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="candlestickChart" height="300" style="max-height: 300px;"></canvas>
+            </div>
+            <div class="chart-tools">
+                <button class="chart-btn" data-period="1h">1H</button>
+                <button class="chart-btn" data-period="4h">4H</button>
+                <button class="chart-btn active" data-period="1d">1D</button>
+                <button class="chart-btn" data-period="1w">1W</button>
+            </div>
+            <div class="chart-indicators">
+                <span><i class="fas fa-chart-line"></i> Current: <span id="chart-current">--</span></span>
+                <span><i class="fas fa-arrows-up-down"></i> Range: <span id="chart-range">--</span> pips</span>
+                <span><i class="fas fa-waveform"></i> Volatility: <span id="chart-volatility">--</span>%</span>
+            </div>
+        </section>
+
+        <!-- Weekend Market Analysis & Forecast -->
+        <section class="weekend-section">
+            <div class="section-header">
+                <h2><i class="fas fa-calendar-week"></i> Weekend Market Analysis & Forecast</h2>
+                <p>Weekly recap, predictions, and next week outlook</p>
+            </div>
+            <div class="weekend-grid">
+                <div class="weekend-card">
+                    <h3><i class="fas fa-chart-line"></i> Weekly Performance</h3>
+                    <div class="weekly-stats">
+                        <div class="weekly-stat"><span>Weekly Range:</span><strong id="weekly-range">--</strong></div>
+                        <div class="weekly-stat"><span>Weekly Change:</span><strong id="weekly-change">--</strong>%</div>
+                        <div class="weekly-stat"><span>Avg True Range:</span><strong id="weekly-atr">--</strong></div>
+                        <div class="weekly-stat"><span>High/Low:</span><strong id="weekly-highlow">--</strong></div>
+                    </div>
+                </div>
+                <div class="weekend-card">
+                    <h3><i class="fas fa-chart-line"></i> Next Week Prediction</h3>
+                    <div class="prediction-content">
+                        <div class="prediction-direction" id="prediction-direction">
+                            <i class="fas fa-arrow-trend-up"></i>
+                            <span>BULLISH BIAS</span>
+                        </div>
+                        <div class="prediction-levels">
+                            <div class="pred-level"><span>Target 1:</span><strong id="target1">--</strong></div>
+                            <div class="pred-level"><span>Target 2:</span><strong id="target2">--</strong></div>
+                            <div class="pred-level"><span>Key Support:</span><strong id="key-support">--</strong></div>
+                            <div class="pred-level"><span>Key Resistance:</span><strong id="key-resistance">--</strong></div>
+                        </div>
+                        <div class="prediction-confidence">
+                            <span>Confidence:</span>
+                            <div class="progress-bar"><div id="prediction-bar" class="progress-fill" style="width: 0%"></div></div>
+                            <span id="prediction-percent">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="weekend-card">
+                    <h3><i class="fas fa-chart-line"></i> Key Levels for Next Week</h3>
+                    <div class="next-week-levels">
+                        <div class="level-item"><span>🚀 Bullish Breakout:</span><strong id="bullish-breakout">--</strong></div>
+                        <div class="level-item"><span>📈 Upside Target:</span><strong id="upside-target">--</strong></div>
+                        <div class="level-item"><span>⚖️ Pivot Point:</span><strong id="pivot-point">--</strong></div>
+                        <div class="level-item"><span>📉 Downside Target:</span><strong id="downside-target">--</strong></div>
+                        <div class="level-item"><span>🐻 Bearish Breakdown:</span><strong id="bearish-breakdown">--</strong></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Market Sentiment & Fear & Greed Index -->
+        <section class="sentiment-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-pie"></i> Market Sentiment & Risk Indicators</h2>
+                <p>Current market mood and risk assessment</p>
+            </div>
+            <div class="sentiment-grid">
+                <div class="sentiment-card">
+                    <h3>Fear & Greed Index</h3>
+                    <div class="gauge-container">
+                        <canvas id="fearGreedGauge" width="150" height="150"></canvas>
+                        <div class="gauge-value" id="fear-greed-value">--</div>
+                        <div class="gauge-label" id="fear-greed-label">Neutral</div>
+                    </div>
+                </div>
+                <div class="sentiment-card">
+                    <h3>Market Sentiment</h3>
+                    <div class="sentiment-stats">
+                        <div class="sentiment-stat bullish"><span>Bullish</span><strong id="bullish-sentiment">--</strong>%</div>
+                        <div class="sentiment-stat bearish"><span>Bearish</span><strong id="bearish-sentiment">--</strong>%</div>
+                        <div class="sentiment-stat neutral"><span>Neutral</span><strong id="neutral-sentiment">--</strong>%</div>
+                    </div>
+                    <div class="progress-bar"><div id="sentiment-bar" class="progress-fill" style="width: 0%"></div></div>
+                </div>
+                <div class="sentiment-card">
+                    <h3>Risk Indicators</h3>
+                    <div class="risk-indicators">
+                        <div class="risk-item"><span>VIX (Fear Index):</span><strong id="vix-value">--</strong></div>
+                        <div class="risk-item"><span>Risk Reversal:</span><strong id="risk-reversal">--</strong></div>
+                        <div class="risk-item"><span>Liquidity Score:</span><strong id="liquidity-score">--</strong></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Currency Strength Meter (Feature 11) -->
+        <section class="strength-section" style="margin-bottom: 32px;">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-simple"></i> Currency Strength Meter</h2>
+                <p>Relative strength of major currencies (1H timeframe)</p>
+            </div>
+            <div class="strength-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">USD</span>
+                        <span class="strength-value" id="usd-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="usd-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">EUR</span>
+                        <span class="strength-value" id="eur-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="eur-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">GBP</span>
+                        <span class="strength-value" id="gbp-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="gbp-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">JPY</span>
+                        <span class="strength-value" id="jpy-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="jpy-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">CHF</span>
+                        <span class="strength-value" id="chf-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="chf-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">CAD</span>
+                        <span class="strength-value" id="cad-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="cad-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">AUD</span>
+                        <span class="strength-value" id="aud-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="aud-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+                <div class="strength-item" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 12px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="currency-code" style="font-weight: 700;">NZD</span>
+                        <span class="strength-value" id="nzd-strength-value">0%</span>
+                    </div>
+                    <div class="strength-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                        <div class="strength-fill" id="nzd-strength" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff4444, #00ff88); border-radius: 10px;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Dashboard -->
+        <section class="indicators-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-simple"></i> Technical Dashboard</h2>
+                <p>Key technical indicators at a glance</p>
+            </div>
+            <div class="indicators-grid">
+                <div class="indicator-card">
+                    <div class="indicator-icon"><i class="fas fa-waveform"></i></div>
+                    <div class="indicator-info">
+                        <span class="indicator-label">RSI (14)</span>
+                        <strong class="indicator-value" id="rsi-value">--</strong>
+                        <span class="indicator-status" id="rsi-status">--</span>
+                    </div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="indicator-info">
+                        <span class="indicator-label">MACD</span>
+                        <strong class="indicator-value" id="macd-value">--</strong>
+                        <span class="indicator-status" id="macd-status">--</span>
+                    </div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-icon"><i class="fas fa-arrows-up-down"></i></div>
+                    <div class="indicator-info">
+                        <span class="indicator-label">ATR (pips)</span>
+                        <strong class="indicator-value" id="atr-indicator">--</strong>
+                        <span class="indicator-status">Volatility</span>
+                    </div>
+                </div>
+                <div class="indicator-card">
+                    <div class="indicator-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="indicator-info">
+                        <span class="indicator-label">ADX</span>
+                        <strong class="indicator-value" id="adx-value">--</strong>
+                        <span class="indicator-status" id="adx-status">--</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pivot Points Calculator (Feature 5) -->
+        <div class="two-columns">
+            <div class="info-card">
+                <div class="card-header"><i class="fas fa-chart-simple"></i><h3>Pivot Points (Daily)</h3></div>
+                <div class="pivot-levels">
+                    <div class="pivot-level resistance" style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: #ff4444;">R3</span><strong id="r3">--</strong></div>
+                    <div class="pivot-level resistance" style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: #ffaa00;">R2</span><strong id="r2-pivot">--</strong></div>
+                    <div class="pivot-level resistance" style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: #ffaa00;">R1</span><strong id="r1-pivot">--</strong></div>
+                    <div class="pivot-level pivot" style="display: flex; justify-content: space-between; padding: 8px 0; margin: 5px 0; background: rgba(0,212,255,0.1); border-radius: 8px;"><span style="color: #00d4ff; font-weight: 700;">PP</span><strong id="pivot-point-new" style="color: #00d4ff;">--</strong></div>
+                    <div class="pivot-level support" style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: #00ff88;">S1</span><strong id="s1-pivot">--</strong></div>
+                    <div class="pivot-level support" style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: #00ff88;">S2</span><strong id="s2-pivot">--</strong></div>
+                    <div class="pivot-level support" style="display: flex; justify-content: space-between; padding: 6px 0;"><span style="color: #00ff88;">S3</span><strong id="s3">--</strong></div>
+                </div>
+            </div>
+
+            <!-- Fibonacci Retracement Levels (Feature 2) -->
+            <div class="info-card">
+                <div class="card-header"><i class="fas fa-chart-line"></i><h3>Fibonacci Retracement</h3></div>
+                <div class="fib-levels">
+                    <div class="fib-level" style="display: flex; justify-content: space-between; padding: 6px 0;"><span>0.236 (23.6%)</span><strong id="fib-236">--</strong></div>
+                    <div class="fib-level" style="display: flex; justify-content: space-between; padding: 6px 0;"><span>0.382 (38.2%)</span><strong id="fib-382">--</strong></div>
+                    <div class="fib-level" style="display: flex; justify-content: space-between; padding: 6px 0;"><span>0.500 (50.0%)</span><strong id="fib-500">--</strong></div>
+                    <div class="fib-level" style="display: flex; justify-content: space-between; padding: 6px 0;"><span>0.618 (61.8%)</span><strong id="fib-618">--</strong></div>
+                    <div class="fib-level" style="display: flex; justify-content: space-between; padding: 6px 0;"><span>0.786 (78.6%)</span><strong id="fib-786">--</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 12 Module Cards -->
+        <section class="modules-section">
+            <div class="section-header">
+                <h2><i class="fas fa-cubes"></i> Analysis Modules</h2>
+                <p>Click any module to access detailed analysis</p>
+            </div>
+            <div class="modules-grid">
+                <div class="module-card" data-page="market-data.html">
+                    <div class="card-icon"><i class="fas fa-database"></i></div>
+                    <div class="card-content">
+                        <h3>Market Data</h3>
+                        <p>Real-time prices, volatility, market metrics</p>
+                        <span class="badge live">LIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="technical.html">
+                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="card-content">
+                        <h3>Technical Analysis</h3>
+                        <p>RSI, MACD, Support/Resistance, Patterns</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="fundamental.html">
+                    <div class="card-icon"><i class="fas fa-landmark"></i></div>
+                    <div class="card-content">
+                        <h3>Fundamental Analysis</h3>
+                        <p>Central banks, GDP, CPI, NFP, FOMC</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="sentiment.html">
+                    <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+                    <div class="card-content">
+                        <h3>Sentiment Analysis</h3>
+                        <p>News sentiment, social media, positioning</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="trend.html">
+                    <div class="card-icon"><i class="fas fa-arrow-trend-up"></i></div>
+                    <div class="card-content">
+                        <h3>Trend Detection</h3>
+                        <p>Trend strength, direction, momentum</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="regime.html">
+                    <div class="card-icon"><i class="fas fa-waveform"></i></div>
+                    <div class="card-content">
+                        <h3>Market Regime</h3>
+                        <p>Volatility regime, risk conditions</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="mtf.html">
+                    <div class="card-icon"><i class="fas fa-clock"></i></div>
+                    <div class="card-content">
+                        <h3>Multi-Timeframe</h3>
+                        <p>M5 to W1 analysis & confluence</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card featured" data-page="signal.html">
+                    <div class="card-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="card-content">
+                        <h3>Signal Generator</h3>
+                        <p>AI-powered trading signals & alerts</p>
+                        <span class="badge hot">HOT</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="risk.html">
+                    <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="card-content">
+                        <h3>Risk Management</h3>
+                        <p>Position sizing, stop-loss, risk metrics</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="news.html">
+                    <div class="card-icon"><i class="fas fa-newspaper"></i></div>
+                    <div class="card-content">
+                        <h3>News Feed</h3>
+                        <p>Forex news, headlines, analysis</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="economic-calendar.html">
+                    <div class="card-icon"><i class="fas fa-calendar-week"></i></div>
+                    <div class="card-content">
+                        <h3>Economic Calendar</h3>
+                        <p>FOMC, NFP, CPI, ECB events</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+                <div class="module-card" data-page="unified.html">
+                    <div class="card-icon"><i class="fas fa-brain"></i></div>
+                    <div class="card-content">
+                        <h3>Unified Analyzer</h3>
+                        <p>All indicators combined into one view</p>
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                    <i class="fas fa-arrow-right card-arrow"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card"><i class="fas fa-chart-line"></i><div class="stat-info"><span>24h High</span><strong id="high-24h">--</strong></div></div>
+            <div class="stat-card"><i class="fas fa-chart-line"></i><div class="stat-info"><span>24h Low</span><strong id="low-24h">--</strong></div></div>
+            <div class="stat-card"><i class="fas fa-waveform"></i><div class="stat-info"><span>ATR (14)</span><strong id="atr-value">--</strong></div></div>
+            <div class="stat-card"><i class="fas fa-gauge-high"></i><div class="stat-info"><span>Volatility</span><strong id="volatility">--</strong>%</div></div>
+        </div>
+
+        <!-- Key Levels & Sessions -->
+        <div class="two-columns">
+            <div class="info-card">
+                <div class="card-header"><i class="fas fa-arrows-up-down"></i><h3>Key Levels</h3></div>
+                <div class="levels-container">
+                    <div class="level resistance"><span>R2</span><strong id="r2">1.1850</strong></div>
+                    <div class="level resistance"><span>R1</span><strong id="r1">1.1820</strong></div>
+                    <div class="level current"><span>Current</span><strong id="current-level">--</strong></div>
+                    <div class="level support"><span>S1</span><strong id="s1">1.1750</strong></div>
+                    <div class="level support"><span>S2</span><strong id="s2">1.1720</strong></div>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="card-header"><i class="fas fa-globe"></i><h3>Trading Sessions</h3></div>
+                <div class="sessions-container" id="sessions-container"></div>
+                <div class="session-note"><i class="fas fa-info-circle"></i> <span id="session-note">Loading...</span></div>
+            </div>
+        </div>
+
+        <!-- Position Size Calculator (Feature 8) -->
+        <div class="two-columns">
+            <div class="info-card">
+                <div class="card-header"><i class="fas fa-calculator"></i><h3>Position Size Calculator</h3></div>
+                <div class="calculator-inputs" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="font-size: 12px; color: #8a8fa8;">Account Balance ($)</label>
+                        <input type="number" id="account-balance" value="10000" step="1000" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 6px 12px; color: white; width: 150px;">
+                    </div>
+                    <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="font-size: 12px; color: #8a8fa8;">Risk % per Trade</label>
+                        <input type="number" id="risk-percent" value="1" step="0.5" min="0.5" max="5" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 6px 12px; color: white; width: 150px;">
+                    </div>
+                    <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="font-size: 12px; color: #8a8fa8;">Stop Loss (pips)</label>
+                        <input type="number" id="stop-loss-pips" value="30" step="5" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 6px 12px; color: white; width: 150px;">
+                    </div>
+                    <button class="btn-calculate" onclick="calculatePositionSize()" style="background: linear-gradient(135deg, #2d6eff, #0099cc); border: none; border-radius: 8px; padding: 8px; color: white; cursor: pointer; margin-top: 8px;">
+                        <i class="fas fa-calculator"></i> Calculate
+                    </button>
+                </div>
+                <div class="calculator-result" id="position-result" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div class="result-item" style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Position Size:</span><strong id="pos-size">0.00 lots</strong></div>
+                    <div class="result-item" style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Risk Amount:</span><strong id="risk-amount">$0.00</strong></div>
+                    <div class="result-item" style="display: flex; justify-content: space-between;"><span>Pip Value:</span><strong id="pip-value">$0.00</strong></div>
+                </div>
+            </div>
+
+            <!-- Trading Session Countdown (Feature 7) -->
+            <div class="info-card">
+                <div class="card-header"><i class="fas fa-hourglass-half"></i><h3>Next Session Countdown</h3></div>
+                <div class="countdown-container">
+                    <div class="countdown-item" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span class="countdown-label" style="color: #8a8fa8;">Next Session:</span>
+                        <strong id="next-session-name" style="color: #00d4ff;">London Open</strong>
+                    </div>
+                    <div class="countdown-timer-large" id="session-countdown" style="text-align: center; font-size: 28px; font-weight: 700; font-family: monospace; letter-spacing: 4px;">
+                        <span>00</span>:<span>00</span>:<span>00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Alert System (Feature 4 - Enhanced) -->
+        <div class="alert-section" style="margin-bottom: 24px;">
+            <div class="section-header">
+                <h2><i class="fas fa-bell"></i> Price Alerts</h2>
+                <p>Get notified when price hits your levels</p>
+            </div>
+            <div class="alert-card" style="background: linear-gradient(135deg, rgba(18,23,42,0.8), rgba(0,0,0,0.3)); border-radius: 16px; padding: 20px; border: 1px solid rgba(0,212,255,0.2);">
+                <div class="alert-inputs" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                    <input type="number" id="alert-price" placeholder="Enter price (e.g., 1.0950)" step="0.0001" style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 10px; color: white;">
+                    <select id="alert-direction" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 10px; color: white;">
+                        <option value="above">Above</option>
+                        <option value="below">Below</option>
+                    </select>
+                    <button onclick="addPriceAlert()" style="background: linear-gradient(135deg, #2d6eff, #0099cc); border: none; border-radius: 8px; padding: 10px 20px; color: white; cursor: pointer;">
+                        <i class="fas fa-plus"></i> Add Alert
+                    </button>
+                </div>
+                <div class="alert-list" id="alert-list" style="max-height: 150px; overflow-y: auto;">
+                    <div style="text-align: center; color: #8a8fa8; padding: 20px;">No active alerts. Add one above.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Auto-Refresh Toggle Control -->
+        <div class="auto-refresh-control" style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; gap: 8px; background: rgba(30, 42, 78, 0.6); padding: 8px 16px; border-radius: 40px; backdrop-filter: blur(10px); cursor: pointer;">
+                <input type="checkbox" id="autoRefreshToggle" checked style="width: 16px; height: 16px; cursor: pointer;">
+                <span style="font-size: 12px; color: #8a8fa8;">Auto-refresh (30s)</span>
+            </label>
+        </div>
+
+        <!-- Additional Features -->
+        <section class="features-section">
+            <div class="section-header"><h2><i class="fas fa-star"></i> Additional Features</h2><p>Enhanced tools for better trading decisions</p></div>
+            <div class="features-grid">
+                <div class="feature-card" id="ai-chat-card">
+                    <div class="feature-icon"><i class="fas fa-robot"></i></div>
+                    <h3>AI Trading Assistant</h3>
+                    <p>Ask anything about EUR/USD, get instant analysis</p>
+                    <div class="feature-footer"><span>Click to chat</span><i class="fas fa-arrow-right"></i></div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-calendar"></i></div>
+                    <h3>Upcoming Events</h3>
+                    <div class="events-list" id="events-list">Loading...</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-calendar-day"></i></div>
+                    <h3>Market Holidays 2026</h3>
+                    <div class="holidays-list" id="holidays-list">Loading...</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-share-alt"></i></div>
+                    <h3>Correlations</h3>
+                    <div class="correlations" id="correlations">Loading...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW: API Status & Data Source Indicator -->
+        <div class="api-status-bar" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 8px 16px; margin-bottom: 20px; font-size: 11px;">
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <span><i class="fas fa-database"></i> Data Source: <strong id="data-source">FCS API</strong></span>
+                <span><i class="fas fa-chart-line"></i> FCS API: <span id="fcs-status" style="color: #00ff88;">✅ Live</span></span>
+                <span><i class="fas fa-calendar"></i> Calendarific: <span id="calendarific-status" style="color: #00ff88;">✅ Active</span></span>
+            </div>
+            <div>
+                <span><i class="fas fa-chart-simple"></i> Next update: <span id="next-update">30s</span></span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left"><i class="fas fa-chart-line"></i><span>EUR/USD Signal Platform v11.0</span></div>
+                <div class="footer-center"><span class="status-dot"></span><span>12 Modules Active</span><span class="separator">|</span><span>Real-time Data</span><span class="separator">|</span><span>FCS API + Calendarific</span></div>
+                <div class="footer-right"><span>© 2026 All Rights Reserved</span></div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- AI Chat Modal -->
+    <div id="ai-chat-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-robot"></i><h3>AI Trading Assistant</h3></div>
+                <button class="modal-close" onclick="closeAIChat()">&times;</button>
+            </div>
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message bot">
+                        <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                        <div class="message-bubble">Hello! I'm your AI trading assistant. Ask me about EUR/USD analysis, trends, signals, or market conditions.</div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Ask me about EUR/USD..." onkeypress="handleChatKeypress(event)">
+                    <button onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+
+    <style>
+        /* Refresh Toast Notification - Better UX */
+        #refresh-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: linear-gradient(135deg, #1a2a4a, #0f172a);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 40px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        #refresh-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        #refresh-toast i {
+            font-size: 14px;
+        }
+        
+        #refresh-toast.success i {
+            color: #00ff88;
+        }
+        
+        #refresh-toast.warning i {
+            color: #ffaa00;
+        }
+        
+        /* Refresh button animation */
+        .btn-refresh.refreshing {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .btn-refresh .fa-sync-alt {
+            transition: transform 0.3s ease;
+        }
+        
+        .btn-refresh.refreshing .fa-sync-alt {
+            animation: btn-spin 1s linear infinite;
+        }
+        
+        @keyframes btn-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Subtle refresh indicator on charts */
+        .chart-refreshing {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        
+        /* Data update pulse animation */
+        @keyframes data-pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.85; }
+            100% { opacity: 1; }
+        }
+        
+        .data-updating {
+            animation: data-pulse 0.3s ease;
+        }
+        
+        /* Holiday item styles */
+        .holiday-item, .correlation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .holiday-name, .correlation-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .holiday-date, .correlation-value {
+            font-size: 11px;
+            color: #00d4ff;
+        }
+        
+        .correlation-value.positive {
+            color: #00ff88;
+        }
+        
+        .correlation-value.negative {
+            color: #ff4444;
+        }
+        
+        /* API Status Bar */
+        .api-status-bar {
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+    </style>
+
+    <script>
+        // Global variables
+        let candlestickChart = null;
+        let fearGreedChart = null;
+        let priceHistory = [];
+        let autoRefreshInterval = null;
+        let countdownInterval = null;
+        let sessionCountdownInterval = null;
+        let priceAlerts = [];
+
+        // ============================================================
+        // LOAD SAVED ALERTS FROM LOCAL STORAGE
+        // ============================================================
+        
+        function loadSavedAlerts() {
+            const saved = localStorage.getItem('priceAlerts');
+            if (saved) {
+                priceAlerts = JSON.parse(saved);
+                updateAlertList();
+            }
+        }
+        
+        function saveAlerts() {
+            localStorage.setItem('priceAlerts', JSON.stringify(priceAlerts));
+        }
+        
+        function addPriceAlert() {
+            const price = parseFloat(document.getElementById('alert-price').value);
+            const direction = document.getElementById('alert-direction').value;
+            
+            if (isNaN(price) || price <= 0) {
+                showToast('Please enter a valid price', 'warning');
+                return;
+            }
+            
+            priceAlerts.push({
+                price: price,
+                direction: direction,
+                triggered: false,
+                createdAt: new Date().toISOString()
+            });
+            
+            saveAlerts();
+            updateAlertList();
+            document.getElementById('alert-price').value = '';
+            showToast(`Alert added: ${direction.toUpperCase()} ${price.toFixed(5)}`, 'success');
+        }
+        
+        function removeAlert(index) {
+            priceAlerts.splice(index, 1);
+            saveAlerts();
+            updateAlertList();
+            showToast('Alert removed', 'success');
+        }
+        
+        function updateAlertList() {
+            const container = document.getElementById('alert-list');
+            if (priceAlerts.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #8a8fa8; padding: 20px;">No active alerts. Add one above.</div>';
+                return;
+            }
+            
+            container.innerHTML = priceAlerts.map((alert, i) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div>
+                        <span style="color: ${alert.direction === 'above' ? '#00ff88' : '#ff4444'}">${alert.direction === 'above' ? '↑' : '↓'}</span>
+                        <strong>${alert.price.toFixed(5)}</strong>
+                        ${alert.triggered ? '<span style="color: #ffaa00; margin-left: 8px;">TRIGGERED!</span>' : ''}
+                    </div>
+                    <button onclick="removeAlert(${i})" style="background: none; border: none; color: #ff4444; cursor: pointer;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function checkPriceAlerts(currentPrice) {
+            priceAlerts.forEach((alert, i) => {
+                if (!alert.triggered) {
+                    let triggered = false;
+                    if (alert.direction === 'above' && currentPrice >= alert.price) {
+                        triggered = true;
+                    } else if (alert.direction === 'below' && currentPrice <= alert.price) {
+                        triggered = true;
+                    }
+                    
+                    if (triggered) {
+                        alert.triggered = true;
+                        showToast(`🔔 ALERT: EUR/USD ${alert.direction.toUpperCase()} ${alert.price.toFixed(5)}`, 'warning');
+                        // Browser notification
+                        if (Notification.permission === 'granted') {
+                            new Notification('Price Alert Triggered', {
+                                body: `EUR/USD is now ${alert.direction} ${alert.price.toFixed(5)}`,
+                                icon: '/favicon.ico'
+                            });
+                        }
+                    }
+                }
+            });
+            saveAlerts();
+            updateAlertList();
+        }
+
+        // ============================================================
+        // POSITION SIZE CALCULATOR
+        // ============================================================
+        
+        function calculatePositionSize() {
+            const balance = parseFloat(document.getElementById('account-balance').value);
+            const riskPercent = parseFloat(document.getElementById('risk-percent').value);
+            const stopLossPips = parseFloat(document.getElementById('stop-loss-pips').value);
+            
+            if (isNaN(balance) || isNaN(riskPercent) || isNaN(stopLossPips)) {
+                showToast('Please enter valid numbers', 'warning');
+                return;
+            }
+            
+            const riskAmount = balance * (riskPercent / 100);
+            const pipValue = 10; // Standard for 1 lot
+            const positionSize = riskAmount / (stopLossPips * pipValue);
+            const finalPositionSize = Math.min(1.0, Math.max(0.01, positionSize));
+            
+            document.getElementById('pos-size').textContent = finalPositionSize.toFixed(2) + ' lots';
+            document.getElementById('risk-amount').textContent = `$${riskAmount.toFixed(2)}`;
+            document.getElementById('pip-value').textContent = `$${(finalPositionSize * 10).toFixed(2)}`;
+        }
+        
+        // ============================================================
+        // SESSION COUNTDOWN
+        // ============================================================
+        
+        function updateSessionCountdown() {
+            const now = new Date();
+            const utcHour = now.getUTCHours();
+            const utcMinute = now.getUTCMinutes();
+            const utcSecond = now.getUTCSeconds();
+            
+            let nextSession = null;
+            let targetHour = 0;
+            let targetMinute = 0;
+            
+            if (utcHour < 0 || (utcHour >= 22 && utcHour <= 23)) {
+                nextSession = 'Sydney Open';
+                targetHour = 22;
+                targetMinute = 0;
+            } else if (utcHour < 8) {
+                nextSession = 'London Open';
+                targetHour = 8;
+                targetMinute = 0;
+            } else if (utcHour < 13) {
+                nextSession = 'New York Open';
+                targetHour = 13;
+                targetMinute = 0;
+            } else if (utcHour < 17) {
+                nextSession = 'London-New York Overlap';
+                targetHour = 17;
+                targetMinute = 0;
+            } else {
+                nextSession = 'Tokyo Open';
+                targetHour = 0;
+                targetMinute = 0;
+            }
+            
+            document.getElementById('next-session-name').textContent = nextSession;
+            
+            let targetDate = new Date(now);
+            targetDate.setUTCHours(targetHour, targetMinute, 0, 0);
+            
+            if (targetDate <= now) {
+                targetDate.setUTCDate(targetDate.getUTCDate() + 1);
+            }
+            
+            const diff = targetDate - now;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            const timerEl = document.getElementById('session-countdown');
+            if (timerEl) {
+                timerEl.innerHTML = `<span>${String(hours).padStart(2, '0')}</span>:<span>${String(minutes).padStart(2, '0')}</span>:<span>${String(seconds).padStart(2, '0')}</span>`;
+            }
+        }
+        
+        // ============================================================
+        // CURRENCY STRENGTH METER (Simulated)
+        // ============================================================
+        
+        function updateCurrencyStrength() {
+            const rsi = parseFloat(document.getElementById('rsi-value').textContent) || 50;
+            const trend = document.getElementById('trendDir')?.textContent || 'SIDEWAYS';
+            
+            // Calculate strengths based on RSI and trend
+            const eurStrength = trend === 'BULLISH' ? Math.min(100, rsi + 10) : Math.max(0, rsi - 10);
+            const usdStrength = 100 - eurStrength;
+            const gbpStrength = Math.min(100, Math.max(0, eurStrength + (Math.random() - 0.5) * 20));
+            const jpyStrength = Math.min(100, Math.max(0, 70 - eurStrength + (Math.random() - 0.5) * 10));
+            const chfStrength = Math.min(100, Math.max(0, 60 + (eurStrength - 50) * 0.5));
+            const cadStrength = Math.min(100, Math.max(0, 55 + (Math.random() - 0.5) * 15));
+            const audStrength = Math.min(100, Math.max(0, 50 + (Math.random() - 0.5) * 20));
+            const nzdStrength = Math.min(100, Math.max(0, 45 + (Math.random() - 0.5) * 20));
+            
+            document.getElementById('eur-strength').style.width = eurStrength + '%';
+            document.getElementById('eur-strength-value').textContent = Math.round(eurStrength) + '%';
+            
+            document.getElementById('usd-strength').style.width = usdStrength + '%';
+            document.getElementById('usd-strength-value').textContent = Math.round(usdStrength) + '%';
+            
+            document.getElementById('gbp-strength').style.width = gbpStrength + '%';
+            document.getElementById('gbp-strength-value').textContent = Math.round(gbpStrength) + '%';
+            
+            document.getElementById('jpy-strength').style.width = jpyStrength + '%';
+            document.getElementById('jpy-strength-value').textContent = Math.round(jpyStrength) + '%';
+            
+            document.getElementById('chf-strength').style.width = chfStrength + '%';
+            document.getElementById('chf-strength-value').textContent = Math.round(chfStrength) + '%';
+            
+            document.getElementById('cad-strength').style.width = cadStrength + '%';
+            document.getElementById('cad-strength-value').textContent = Math.round(cadStrength) + '%';
+            
+            document.getElementById('aud-strength').style.width = audStrength + '%';
+            document.getElementById('aud-strength-value').textContent = Math.round(audStrength) + '%';
+            
+            document.getElementById('nzd-strength').style.width = nzdStrength + '%';
+            document.getElementById('nzd-strength-value').textContent = Math.round(nzdStrength) + '%';
+        }
+        
+        // ============================================================
+        // UPDATE TRADE IDEA
+        // ============================================================
+        
+        function updateTradeIdea() {
+            const rsi = parseFloat(document.getElementById('rsi-value').textContent) || 50;
+            const trend = document.getElementById('trendDir')?.textContent || 'SIDEWAYS';
+            const currentPrice = parseFloat(document.getElementById('eurusd-price').textContent) || 1.1750;
+            
+            let idea = '';
+            let setup = '';
+            let target = '';
+            let stop = '';
+            let rr = '';
+            
+            if (rsi < 30 && trend !== 'BEARISH') {
+                idea = 'RSI showing oversold conditions. Consider LONG entry on pullback to support zone.';
+                setup = 'Limit Buy';
+                target = '+40 pips';
+                stop = '-20 pips';
+                rr = '2:1';
+            } else if (rsi > 70 && trend !== 'BULLISH') {
+                idea = 'RSI showing overbought conditions. Consider SHORT entry near resistance.';
+                setup = 'Limit Sell';
+                target = '+40 pips';
+                stop = '-20 pips';
+                rr = '2:1';
+            } else if (trend === 'BULLISH') {
+                idea = 'Bullish trend confirmed. Look for pullbacks to moving averages for entries.';
+                setup = 'Buy on Pullback';
+                target = '+50 pips';
+                stop = '-25 pips';
+                rr = '2:1';
+            } else if (trend === 'BEARISH') {
+                idea = 'Bearish trend established. Look for retracements to resistance levels.';
+                setup = 'Sell on Rally';
+                target = '+50 pips';
+                stop = '-25 pips';
+                rr = '2:1';
+            } else {
+                idea = 'Market ranging. Consider mean reversion strategy at support/resistance levels.';
+                setup = 'Range Trading';
+                target = '+30 pips';
+                stop = '-30 pips';
+                rr = '1:1';
+            }
+            
+            document.getElementById('trade-idea').innerHTML = `<p style="font-size: 14px; color: #a0b3d9;">${idea}</p>`;
+            document.getElementById('trade-setup').textContent = setup;
+            document.getElementById('trade-target').textContent = target;
+            document.getElementById('trade-stop').textContent = stop;
+            document.getElementById('trade-rr').textContent = rr;
+        }
+        
+        // ============================================================
+        // UPDATE PIVOT POINTS & FIBONACCI
+        // ============================================================
+        
+        function updatePivotPoints(high, low, close) {
+            const pivot = (high + low + close) / 3;
+            const r1 = 2 * pivot - low;
+            const r2 = pivot + (high - low);
+            const r3 = high + 2 * (pivot - low);
+            const s1 = 2 * pivot - high;
+            const s2 = pivot - (high - low);
+            const s3 = low - 2 * (high - pivot);
+            
+            document.getElementById('pivot-point-new').textContent = pivot.toFixed(5);
+            document.getElementById('r1-pivot').textContent = r1.toFixed(5);
+            document.getElementById('r2-pivot').textContent = r2.toFixed(5);
+            document.getElementById('r3').textContent = r3.toFixed(5);
+            document.getElementById('s1-pivot').textContent = s1.toFixed(5);
+            document.getElementById('s2-pivot').textContent = s2.toFixed(5);
+            document.getElementById('s3').textContent = s3.toFixed(5);
+            
+            // Update Fibonacci levels
+            const range24h = high - low;
+            document.getElementById('fib-236').textContent = (high - range24h * 0.236).toFixed(5);
+            document.getElementById('fib-382').textContent = (high - range24h * 0.382).toFixed(5);
+            document.getElementById('fib-500').textContent = (high - range24h * 0.5).toFixed(5);
+            document.getElementById('fib-618').textContent = (high - range24h * 0.618).toFixed(5);
+            document.getElementById('fib-786').textContent = (high - range24h * 0.786).toFixed(5);
+        }
+        
+        // ============================================================
+        // BETTER UX: Toast notification instead of blank overlay
+        // ============================================================
+        
+        function showToast(message, type = 'success') {
+            let toast = document.getElementById('refresh-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'refresh-toast';
+                document.body.appendChild(toast);
+            }
+            
+            const icon = type === 'success' ? '<i class="fas fa-check-circle" style="color: #00ff88;"></i>' : '<i class="fas fa-exclamation-triangle" style="color: #ffaa00;"></i>';
+            toast.innerHTML = `${icon}<span>${message}</span>`;
+            toast.className = type;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+            }, 2500);
+        }
+        
+        // Subtle refresh indicator on price card instead of full-screen overlay
+        function animatePriceUpdate() {
+            const priceCard = document.querySelector('.live-price-card');
+            if (priceCard) {
+                priceCard.classList.add('data-updating');
+                setTimeout(() => priceCard.classList.remove('data-updating'), 300);
+            }
+            
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn && !refreshBtn.classList.contains('refreshing')) {
+                refreshBtn.classList.add('refreshing');
+                setTimeout(() => refreshBtn.classList.remove('refreshing'), 500);
+            }
+        }
+        
+        // Countdown timer for next update
+        function startCountdown() {
+            let seconds = 30;
+            const nextUpdateEl = document.getElementById('next-update');
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                if (seconds <= 0) {
+                    seconds = 30;
+                }
+                if (nextUpdateEl) nextUpdateEl.textContent = seconds + 's';
+                seconds--;
+            }, 1000);
+        }
+        
+        // ============================================================
+        // AUTO-REFRESH CONTROLS
+        // ============================================================
+        
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                console.log('🔄 Auto-refreshing data...');
+                refreshAllData();
+            }, 30000);
+            console.log('✅ Auto-refresh started (30s interval)');
+            startCountdown();
+            showToast('Auto-refresh enabled (30s)', 'success');
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log('⏸️ Auto-refresh stopped');
+                if (countdownInterval) clearInterval(countdownInterval);
+                showToast('Auto-refresh disabled', 'warning');
+            }
+        }
+
+        // ============================================================
+        // CHART INITIALIZATION
+        // ============================================================
+        
+        function initCandlestickChart() {
+            const canvas = document.getElementById('candlestickChart');
+            if (!canvas) {
+                console.error('Candlestick chart canvas not found');
+                return;
+            }
+            
+            const ctx = canvas.getContext('2d');
+            
+            const candles = [];
+            let basePrice = 1.1750;
+            
+            for (let i = 0; i < 50; i++) {
+                const open = basePrice + (Math.random() - 0.5) * 0.002;
+                const close = open + (Math.random() - 0.5) * 0.003;
+                const high = Math.max(open, close) + Math.random() * 0.002;
+                const low = Math.min(open, close) - Math.random() * 0.002;
+                
+                candles.push({ x: i, o: open, h: high, l: low, c: close });
+                basePrice = close;
+                priceHistory.push(close);
+            }
+            
+            candlestickChart = new Chart(ctx, {
+                type: 'candlestick',
+                data: {
+                    datasets: [{
+                        label: 'EUR/USD',
+                        data: candles,
+                        borderColor: '#2d6eff',
+                        borderWidth: 1,
+                        upColor: '#00ff88',
+                        downColor: '#ff4444',
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const item = context.raw;
+                                    return [
+                                        `Open: ${item.o.toFixed(5)}`,
+                                        `High: ${item.h.toFixed(5)}`,
+                                        `Low: ${item.l.toFixed(5)}`,
+                                        `Close: ${item.c.toFixed(5)}`
+                                    ];
+                                }
+                            }
+                        },
+                        legend: { labels: { color: '#ffffff' } }
+                    },
+                    scales: {
+                        x: { 
+                            type: 'linear',
+                            ticks: { color: '#8a8fa8' }, 
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            title: { display: true, text: 'Candle Number', color: '#8a8fa8' }
+                        },
+                        y: { 
+                            ticks: { color: '#8a8fa8' }, 
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
+                }
+            });
+            
+            console.log('✅ Candlestick chart initialized');
+        }
+
+        function initFearGreedGauge() {
+            const canvas = document.getElementById('fearGreedGauge');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            fearGreedChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [50, 50],
+                        backgroundColor: ['#ffaa00', '#2c3e50'],
+                        borderWidth: 0,
+                        circumference: 180,
+                        rotation: 270
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                }
+            });
+        }
+
+        function updateFearGreedGauge(value) {
+            if (!fearGreedChart) return;
+            
+            let color = '#ffaa00';
+            let label = 'Neutral';
+            if (value >= 80) { color = '#00ff88'; label = 'Extreme Greed'; }
+            else if (value >= 60) { color = '#88ff88'; label = 'Greed'; }
+            else if (value >= 40) { color = '#ffaa00'; label = 'Neutral'; }
+            else if (value >= 20) { color = '#ff8888'; label = 'Fear'; }
+            else { color = '#ff4444'; label = 'Extreme Fear'; }
+            
+            fearGreedChart.data.datasets[0].data = [value, 100 - value];
+            fearGreedChart.data.datasets[0].backgroundColor = [color, '#2c3e50'];
+            fearGreedChart.update();
+            
+            document.getElementById('fear-greed-value').textContent = value;
+            document.getElementById('fear-greed-label').textContent = label;
+        }
+
+        function updateCandlestickChart(newPrice) {
+            if (!candlestickChart || !newPrice) return;
+            
+            const currentData = candlestickChart.data.datasets[0].data;
+            const lastCandle = currentData[currentData.length - 1];
+            
+            if (lastCandle) {
+                const newCandle = {
+                    x: currentData.length,
+                    o: lastCandle.c,
+                    h: Math.max(lastCandle.c, newPrice) + 0.0002,
+                    l: Math.min(lastCandle.c, newPrice) - 0.0002,
+                    c: newPrice
+                };
+                
+                candlestickChart.data.datasets[0].data.push(newCandle);
+                if (candlestickChart.data.datasets[0].data.length > 100) {
+                    candlestickChart.data.datasets[0].data.shift();
+                    candlestickChart.data.datasets[0].data.forEach((candle, idx) => { candle.x = idx; });
+                }
+                candlestickChart.update('none');
+            }
+        }
+
+        // ============================================================
+        // TRADING SESSIONS
+        // ============================================================
+        
+        function updateTradingSessions() {
+            const now = new Date();
+            const utcHour = now.getUTCHours();
+            
+            const sessions = [
+                { name: 'Tokyo', active: utcHour >= 0 && utcHour < 8, progress: utcHour >= 0 && utcHour < 8 ? ((utcHour - 0) / 8) * 100 : 0 },
+                { name: 'London', active: utcHour >= 8 && utcHour < 17, progress: utcHour >= 8 && utcHour < 17 ? ((utcHour - 8) / 9) * 100 : 0 },
+                { name: 'New York', active: utcHour >= 13 && utcHour < 22, progress: utcHour >= 13 && utcHour < 22 ? ((utcHour - 13) / 9) * 100 : 0 }
+            ];
+            
+            const container = document.getElementById('sessions-container');
+            if (container) {
+                container.innerHTML = sessions.map(s => `
+                    <div class="session">
+                        <div class="session-info">
+                            <span>${s.name}</span>
+                            <span class="session-status ${s.active ? 'active' : 'closed'}">${s.active ? 'Active' : 'Closed'}</span>
+                        </div>
+                        <div class="progress-bar"><div class="progress" style="width: ${s.progress}%"></div></div>
+                    </div>
+                `).join('');
+            }
+            
+            const activeSession = sessions.find(s => s.active);
+            const noteEl = document.getElementById('session-note');
+            if (noteEl) {
+                noteEl.textContent = activeSession ? 
+                    `${activeSession.name} session active - ${activeSession.name === 'London' ? 'Highest liquidity' : activeSession.name === 'New York' ? 'High volatility expected' : 'Moderate activity'}` : 
+                    'Weekend - Market closed';
+            }
+        }
+
+        // ============================================================
+        // MARKET HOLIDAYS & CORRELATIONS
+        // ============================================================
+        
+        async function loadMarketHolidays() {
+            try {
+                const response = await fetch('/api/market-holidays');
+                const data = await response.json();
+                const holidaysList = document.getElementById('holidays-list');
+                
+                if (data.success && data.holidays && data.holidays.length > 0) {
+                    const holidaysHtml = data.holidays.slice(0, 5).map(h => `
+                        <div class="holiday-item">
+                            <span class="holiday-name">${h.name}</span>
+                            <span class="holiday-date">${h.date}</span>
+                        </div>
+                    `).join('');
+                    holidaysList.innerHTML = holidaysHtml;
+                    document.getElementById('calendarific-status').textContent = '✅ Active';
+                    document.getElementById('calendarific-status').style.color = '#00ff88';
+                } else {
+                    holidaysList.innerHTML = '<div class="holiday-item"><span>No upcoming holidays</span></div>';
+                }
+            } catch (error) {
+                console.error('Market holidays error:', error);
+                document.getElementById('holidays-list').innerHTML = '<div class="holiday-item"><span>Holiday data unavailable</span></div>';
+                document.getElementById('calendarific-status').textContent = '⚠️ Fallback';
+                document.getElementById('calendarific-status').style.color = '#ffaa00';
+            }
+        }
+        
+        async function loadCorrelations() {
+            try {
+                const response = await fetch('/api/correlations');
+                const data = await response.json();
+                const correlationsList = document.getElementById('correlations');
+                
+                if (data.success && data.correlations && data.correlations.length > 0) {
+                    const correlationsHtml = data.correlations.map(c => {
+                        const value = typeof c.correlation === 'number' ? c.correlation.toFixed(4) : c.correlation;
+                        const isPositive = parseFloat(value) > 0;
+                        return `
+                            <div class="correlation-item">
+                                <span class="correlation-name">${c.pair}</span>
+                                <span class="correlation-value ${isPositive ? 'positive' : 'negative'}">
+                                    ${isPositive ? '+' : ''}${value}
+                                </span>
+                            </div>
+                        `;
+                    }).join('');
+                    correlationsList.innerHTML = correlationsHtml;
+                } else {
+                    correlationsList.innerHTML = '<div class="correlation-item"><span>Correlation data unavailable</span></div>';
+                }
+            } catch (error) {
+                console.error('Correlations error:', error);
+                document.getElementById('correlations').innerHTML = '<div class="correlation-item"><span>Using calculated correlations</span></div>';
+            }
+        }
+
+        // ============================================================
+        // DATA FETCHING
+        // ============================================================
+        
+        async function loadLivePrice() {
+            try {
+                const response = await fetch('/api/price');
+                const data = await response.json();
+                if (data.success && data.price) {
+                    const price = data.price;
+                    document.getElementById('eurusd-price').textContent = price.toFixed(5);
+                    document.getElementById('current-level').textContent = price.toFixed(5);
+                    document.getElementById('chart-current').textContent = price.toFixed(5);
+                    document.getElementById('ticker-price').textContent = price.toFixed(5);
+                    
+                    // Check price alerts
+                    checkPriceAlerts(price);
+                    
+                    if (data.source) {
+                        document.getElementById('data-source').textContent = data.source.toUpperCase();
+                        document.getElementById('fcs-status').textContent = data.source === 'fcs_api' ? '✅ Live' : '⚠️ Fallback';
+                        document.getElementById('fcs-status').style.color = data.source === 'fcs_api' ? '#00ff88' : '#ffaa00';
+                    }
+                    
+                    priceHistory.push(price);
+                    if (priceHistory.length > 100) priceHistory.shift();
+                    
+                    updateCandlestickChart(price);
+                    
+                    if (priceHistory.length > 1) {
+                        const high = Math.max(...priceHistory);
+                        const low = Math.min(...priceHistory);
+                        const range = (high - low) * 10000;
+                        document.getElementById('chart-range').textContent = range.toFixed(1);
+                        
+                        // Update pivot points
+                        const close = price;
+                        updatePivotPoints(high, low, close);
+                    }
+                    
+                    return price;
+                }
+            } catch (error) {
+                console.error('Price load error:', error);
+                return null;
+            }
+        }
+
+        async function loadSignal() {
+            try {
+                const response = await fetch('/api/signal');
+                const data = await response.json();
+                if (data.success && data.signal) {
+                    const signalType = data.signal.type || 'NEUTRAL';
+                    const confidence = data.signal.confidence || 50;
+                    
+                    document.getElementById('main-signal').textContent = signalType;
+                    document.getElementById('main-signal').className = `signal-type ${signalType.toLowerCase().replace('_', '-')}`;
+                    document.getElementById('signal-confidence').textContent = `${Math.round(confidence)}%`;
+                    document.getElementById('signal-banner').className = `signal-banner ${signalType.toLowerCase().replace('_', '-')}`;
+                    document.getElementById('prediction-bar').style.width = `${confidence}%`;
+                    document.getElementById('prediction-percent').textContent = `${Math.round(confidence)}%`;
+                    
+                    const predEl = document.getElementById('prediction-direction');
+                    if (signalType.includes('BUY')) {
+                        predEl.innerHTML = '<i class="fas fa-arrow-trend-up"></i><span>BULLISH BIAS</span>';
+                        predEl.className = 'prediction-direction bullish';
+                    } else if (signalType.includes('SELL')) {
+                        predEl.innerHTML = '<i class="fas fa-arrow-trend-down"></i><span>BEARISH BIAS</span>';
+                        predEl.className = 'prediction-direction bearish';
+                    } else {
+                        predEl.innerHTML = '<i class="fas fa-arrow-right"></i><span>NEUTRAL BIAS</span>';
+                        predEl.className = 'prediction-direction neutral';
+                    }
+                }
+            } catch (error) {
+                console.error('Signal load error:', error);
+            }
+        }
+
+        async function loadTechnicalIndicators() {
+            try {
+                const response = await fetch('/api/technical');
+                const data = await response.json();
+                if (data.success) {
+                    const indicators = data.indicators || {};
+                    const rsi = indicators.rsi || 50;
+                    const atr = indicators.atr?.pips || 20;
+                    const volatility = indicators.volatility || 12.5;
+                    
+                    document.getElementById('rsi-value').textContent = rsi;
+                    document.getElementById('rsi-status').textContent = rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral';
+                    document.getElementById('atr-indicator').textContent = `${atr} pips`;
+                    document.getElementById('atr-value').textContent = `${atr} pips`;
+                    document.getElementById('volatility').textContent = `${volatility}%`;
+                    document.getElementById('chart-volatility').textContent = `${volatility}%`;
+                    document.getElementById('weekly-atr').textContent = `${atr} pips`;
+                    
+                    const bullish = Math.min(100, rsi + 10);
+                    const bearish = Math.min(100, 110 - rsi);
+                    const neutral = Math.abs(50 - rsi);
+                    
+                    document.getElementById('bullish-sentiment').textContent = Math.round(bullish);
+                    document.getElementById('bearish-sentiment').textContent = Math.round(bearish);
+                    document.getElementById('neutral-sentiment').textContent = Math.round(neutral);
+                    document.getElementById('sentiment-bar').style.width = `${rsi}%`;
+                    
+                    const fearGreed = rsi > 65 ? 85 : rsi > 55 ? 65 : rsi > 45 ? 50 : rsi > 35 ? 35 : 15;
+                    updateFearGreedGauge(fearGreed);
+                    
+                    document.getElementById('vix-value').textContent = (15 + (70 - rsi) / 10).toFixed(1);
+                    document.getElementById('risk-reversal').textContent = rsi > 60 ? 'Bullish' : rsi < 40 ? 'Bearish' : 'Neutral';
+                    document.getElementById('liquidity-score').textContent = Math.min(100, Math.max(50, 70 + (rsi - 50) / 2)).toFixed(0);
+                    
+                    const currentPrice = data.current_price || 1.1750;
+                    document.getElementById('target1').textContent = (currentPrice + 0.0050).toFixed(5);
+                    document.getElementById('target2').textContent = (currentPrice + 0.0100).toFixed(5);
+                    document.getElementById('key-support').textContent = (currentPrice - 0.0030).toFixed(5);
+                    document.getElementById('key-resistance').textContent = (currentPrice + 0.0030).toFixed(5);
+                    document.getElementById('bullish-breakout').textContent = (currentPrice + 0.0075).toFixed(5);
+                    document.getElementById('upside-target').textContent = (currentPrice + 0.0150).toFixed(5);
+                    document.getElementById('pivot-point').textContent = currentPrice.toFixed(5);
+                    document.getElementById('downside-target').textContent = (currentPrice - 0.0150).toFixed(5);
+                    document.getElementById('bearish-breakdown').textContent = (currentPrice - 0.0075).toFixed(5);
+                    
+                    if (priceHistory.length > 0) {
+                        const weeklyHigh = Math.max(...priceHistory);
+                        const weeklyLow = Math.min(...priceHistory);
+                        const weeklyRange = (weeklyHigh - weeklyLow) * 10000;
+                        document.getElementById('weekly-range').textContent = weeklyRange.toFixed(0);
+                        
+                        const weeklyChange = ((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100;
+                        document.getElementById('weekly-change').textContent = `${weeklyChange > 0 ? '+' : ''}${weeklyChange.toFixed(2)}%`;
+                        document.getElementById('weekly-highlow').textContent = `${weeklyHigh.toFixed(5)} / ${weeklyLow.toFixed(5)}`;
+                    }
+                    
+                    if (priceHistory.length > 0) {
+                        const last24h = priceHistory.slice(-24);
+                        const high24h = Math.max(...last24h);
+                        const low24h = Math.min(...last24h);
+                        document.getElementById('high-24h').textContent = high24h.toFixed(5);
+                        document.getElementById('low-24h').textContent = low24h.toFixed(5);
+                        
+                        // Update trend direction for strength meter
+                        const trendDir = document.getElementById('trendDir');
+                        if (trendDir) trendDir.textContent = indicators.trend?.direction || 'SIDEWAYS';
+                    }
+                    
+                    // Update currency strength and trade idea after indicators load
+                    updateCurrencyStrength();
+                    updateTradeIdea();
+                }
+            } catch (error) {
+                console.error('Technical indicators error:', error);
+            }
+        }
+
+        async function loadEconomicEvents() {
+            try {
+                const response = await fetch('/api/economic-calendar');
+                const data = await response.json();
+                if (data.success && data.events?.length) {
+                    const eventsHtml = data.events.slice(0, 3).map(e => `
+                        <div class="event-item ${e.impact.toLowerCase()}">
+                            <div class="event-info">
+                                <span class="event-name">${e.name.substring(0, 25)}</span>
+                                <span class="event-time">${e.days_until === 0 ? 'Today' : e.days_until === 1 ? 'Tomorrow' : `${e.days_until}d`}</span>
+                            </div>
+                            <div class="event-impact">${e.impact}</div>
+                        </div>
+                    `).join('');
+                    document.getElementById('events-list').innerHTML = eventsHtml;
+                }
+            } catch (error) {
+                console.error('Events error:', error);
+            }
+        }
+
+        // Main refresh function with all data sources
+        function refreshAllData() {
+            animatePriceUpdate();
+            document.getElementById('update-time').textContent = 'Updating...';
+            
+            Promise.all([
+                loadLivePrice(), 
+                loadSignal(), 
+                loadTechnicalIndicators(), 
+                loadEconomicEvents(),
+                loadMarketHolidays(),
+                loadCorrelations()
+            ])
+                .then(() => {
+                    document.getElementById('update-time').textContent = 'Just now';
+                    showToast('Data updated successfully', 'success');
+                })
+                .catch((error) => {
+                    console.error('Refresh error:', error);
+                    document.getElementById('update-time').textContent = 'Update failed';
+                    showToast('Update failed, retrying...', 'warning');
+                });
+        }
+
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+        
+        function updateClock() {
+            document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
+            updateTradingSessions();
+            updateSessionCountdown();
+        }
+        
+        function openAIChat() { document.getElementById('ai-chat-modal').style.display = 'flex'; }
+        function closeAIChat() { document.getElementById('ai-chat-modal').style.display = 'none'; }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addChatMessage('user', message);
+            input.value = '';
+            
+            try {
+                const response = await fetch('/api/ai-chat', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ message }) 
+                });
+                const data = await response.json();
+                addChatMessage('bot', data.success ? data.response : 'Sorry, I encountered an error.');
+            } catch (error) {
+                addChatMessage('bot', 'Network error. Please try again.');
+            }
+        }
+
+        function handleChatKeypress(event) { if (event.key === 'Enter') sendChatMessage(); }
+        
+        function addChatMessage(type, content) {
+            const container = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `<div class="message-avatar"><i class="fas ${type === 'bot' ? 'fa-robot' : 'fa-user'}"></i></div><div class="message-bubble">${content}</div>`;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Export data feature
+        document.getElementById('exportBtn')?.addEventListener('click', () => {
+            const data = {
+                price: document.getElementById('eurusd-price').textContent,
+                signal: document.getElementById('main-signal').textContent,
+                rsi: document.getElementById('rsi-value').textContent,
+                atr: document.getElementById('atr-value').textContent,
+                volatility: document.getElementById('volatility').textContent,
+                timestamp: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `eurusd_export_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Data exported successfully', 'success');
+        });
+        
+        // Fullscreen feature
+        document.getElementById('fullscreenBtn')?.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                showToast('Fullscreen mode enabled', 'success');
+            } else {
+                document.exitFullscreen();
+                showToast('Fullscreen mode exited', 'success');
+            }
+        });
+        
+        // Request notification permission on load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initCandlestickChart();
+            initFearGreedGauge();
+            loadSavedAlerts();
+            
+            refreshAllData();
+            
+            startAutoRefresh();
+            
+            setInterval(updateClock, 1000);
+            setInterval(updateTradingSessions, 60000);
+            setInterval(updateSessionCountdown, 1000);
+            
+            updateClock();
+            updateTradingSessions();
+            
+            const toggleCheckbox = document.getElementById('autoRefreshToggle');
+            if (toggleCheckbox) {
+                toggleCheckbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        startAutoRefresh();
+                    } else {
+                        stopAutoRefresh();
+                    }
+                });
+            }
+            
+            document.querySelectorAll('.module-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    const page = this.dataset.page;
+                    if (page && !e.target.closest('.feature-btn')) {
+                        window.location.href = `pages/${page}`;
+                    }
+                });
+            });
+            
+            document.getElementById('refreshBtn')?.addEventListener('click', () => refreshAllData());
+            document.getElementById('ai-chat-card')?.addEventListener('click', openAIChat);
+            
+            document.querySelectorAll('.chart-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+        
+        window.onclick = (event) => { const modal = document.getElementById('ai-chat-modal'); if (event.target === modal) closeAIChat(); };
+    </script>
+</body>
+</html>

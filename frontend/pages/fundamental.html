@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundamental Analysis | EUR/USD Signal Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 20% 0%, #0a0f1e, #050a14);
+            font-family: 'Inter', sans-serif;
+            color: #edf2ff;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .logo h1 { font-size: 1.5rem; background: linear-gradient(120deg, #fff, #8bb4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .badge { background: rgba(45, 110, 255, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; color: #8bb4ff; }
+        .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav-btn { background: rgba(30, 42, 78, 0.8); padding: 8px 20px; border-radius: 40px; text-decoration: none; color: white; font-size: 0.85rem; transition: all 0.3s; }
+        .nav-btn:hover { background: #2d6eff; transform: translateY(-2px); }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .card { background: rgba(12, 20, 32, 0.65); backdrop-filter: blur(14px); border: 1px solid rgba(45,110,255,0.25); border-radius: 24px; padding: 20px; transition: all 0.3s; }
+        .card:hover { border-color: rgba(45,110,255,0.5); transform: translateY(-2px); }
+        .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #8bb4ff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .metric-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .metric-row:last-child { border-bottom: none; }
+        .signal-bullish { color: #2ecc71; }
+        .signal-bearish { color: #e74c3c; }
+        .signal-neutral { color: #f1c40f; }
+        .progress-bar { height: 8px; background: #2c3e50; border-radius: 4px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #2d6eff, #00d4ff); border-radius: 4px; transition: width 0.5s; }
+        .live-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 1.5s infinite; }
+        .live-indicator { background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 40px; font-size: 12px; display: flex; align-items: center; gap: 10px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; opacity: 0.6; }
+        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } body { padding: 16px; } }
+        .score-large { font-size: 2.5rem; font-weight: 800; }
+        .alert-high { color: #ff4444; }
+        .alert-medium { color: #ffaa00; }
+        .alert-low { color: #00ff88; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1><i class="fas fa-landmark"></i> Fundamental Analysis</h1>
+            <div class="badge" style="margin-top: 5px;">Central Banks · GDP · CPI · Interest Rates · ESI · Geopolitical Risk</div>
+        </div>
+        <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span>REAL DATA</span>
+            <span id="liveTimestamp">--:--:--</span>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="/" class="nav-btn"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/pages/signal.html" class="nav-btn"><i class="fas fa-bolt"></i> Signal</a>
+        <a href="/pages/technical.html" class="nav-btn"><i class="fas fa-chart-line"></i> Technical</a>
+        <a href="/pages/sentiment.html" class="nav-btn"><i class="fas fa-chart-pie"></i> Sentiment</a>
+        <a href="/pages/trend.html" class="nav-btn"><i class="fas fa-chart-simple"></i> Trend</a>
+        <a href="/pages/regime.html" class="nav-btn"><i class="fas fa-waveform"></i> Regime</a>
+    </div>
+
+    <!-- Composite Score Card -->
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Composite Fundamental Score</div>
+            <div class="score-large" id="compositeScore">--</div>
+            <div class="progress-bar"><div id="compositeBar" class="progress-fill" style="width: 0%;"></div></div>
+            <div class="metric-row"><span>Market Bias:</span><span id="compositeBias" class="signal-neutral">--</span></div>
+            <div class="metric-row"><span>Confidence:</span><span id="compositeConfidence">--</span>%</div>
+            <div class="metric-row"><span>Analysis Time:</span><span id="analysisTime">--</span>ms</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-university"></i> Central Bank Watch</div>
+            <div class="metric-row"><span>🇺🇸 Fed Rate:</span><strong>5.50%</strong></div>
+            <div class="metric-row"><span>🇪🇺 ECB Rate:</span><strong>4.50%</strong></div>
+            <div class="metric-row"><span>Rate Differential:</span><span id="rateDiff">--</span>%</div>
+            <div class="metric-row"><span>Policy Divergence:</span><span id="policyDivergence">--</span></div>
+            <div class="metric-row"><span>Favors Currency:</span><span id="favors" class="signal-bullish">--</span></div>
+            <div class="metric-row"><span>Fed Future (6m):</span><span id="fedFuture">--</span>%</div>
+            <div class="metric-row"><span>ECB Future (6m):</span><span id="ecbFuture">--</span>%</div>
+        </div>
+    </div>
+
+    <!-- Economic Surprise & Geopolitical -->
+    <div class="grid-3">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Economic Surprise Index (ESI)</div>
+            <div class="metric-row"><span>🇺🇸 US ESI:</span><strong id="usEsi">--</strong> <span id="usEsiInterpret">--</span></div>
+            <div class="metric-row"><span>🇪🇺 EU ESI:</span><strong id="euEsi">--</strong> <span id="euEsiInterpret">--</span></div>
+            <div class="metric-row"><span>Divergence:</span><span id="esiDivergence">--</span></div>
+            <div class="metric-row"><span>Market Impact:</span><span id="marketImpact">--</span></div>
+            <div class="metric-row"><span>Expected Pips:</span><span id="expectedPips">--</span> pips</div>
+            <div class="metric-row"><span>Confidence:</span><span id="impactConfidence">--</span>%</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-globe-americas"></i> Geopolitical Risk Index</div>
+            <div class="score-large" id="gprIndex">--</div>
+            <div class="metric-row"><span>Risk Regime:</span><span id="riskRegime">--</span></div>
+            <div class="metric-row"><span>Risk Premium:</span><span id="riskPremium">--</span> pips</div>
+            <div class="metric-row"><span>Safe Haven Flow:</span><span id="safeHaven">--</span></div>
+            <div class="metric-row"><span>Historical Percentile:</span><span id="historicalPercentile">--</span>%</div>
+            <div class="metric-row"><span>Trend:</span><span id="gprTrend">--</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-coins"></i> Carry Trade Analysis</div>
+            <div class="metric-row"><span>Carry Yield:</span><strong id="carryYield">--</strong> bps</div>
+            <div class="metric-row"><span>Annualized Return:</span><span id="carryReturn">--</span>%</div>
+            <div class="metric-row"><span>Carry Sharpe Ratio:</span><span id="carrySharpe">--</span></div>
+            <div class="metric-row"><span>Attractive Trade:</span><span id="carryAttractive">--</span></div>
+            <div class="metric-row"><span>Recommended Leverage:</span><span id="recommendedLeverage">--</span>x</div>
+            <div class="metric-row"><span>Roll Yield:</span><span id="rollYield">--</span>%</div>
+        </div>
+    </div>
+
+    <!-- Market Regime & Scanner -->
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-waveform"></i> Market Regime</div>
+            <div class="metric-row"><span>Current Regime:</span><strong id="marketRegime">--</strong></div>
+            <div class="metric-row"><span>Regime Score:</span><span id="regimeScore">--</span></div>
+            <div class="metric-row"><span>VIX Equivalent:</span><span id="vixEquivalent">--</span></div>
+            <div class="metric-row"><span>Recommended Hedge:</span><span id="recommendedHedge">--</span></div>
+            <div class="metric-row"><span>Description:</span><span id="regimeDescription">--</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-simple"></i> Market Scanner</div>
+            <div id="marketScanner"></div>
+            <div class="metric-row"><span>Composite Risk Score:</span><span id="compositeRiskScore">--</span></div>
+            <div class="metric-row"><span>Risk Level:</span><span id="riskLevel">--</span></div>
+            <div class="metric-row"><span>EUR/USD Drivers:</span><span id="eurusdDrivers">--</span></div>
+        </div>
+    </div>
+
+    <!-- Component Breakdown -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-pie"></i> Component Breakdown</div>
+        <div id="componentBreakdown" class="grid-4"></div>
+    </div>
+
+    <!-- Trading Recommendation -->
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-title"><i class="fas fa-lightbulb"></i> Trading Recommendation</div>
+        <div class="grid-2">
+            <div class="metric-row"><span>Direction:</span><strong id="recDirection">--</strong></div>
+            <div class="metric-row"><span>Position Size:</span><span id="recPositionSize">--</span> lots</div>
+            <div class="metric-row"><span>Confidence:</span><span id="recConfidence">--</span>%</div>
+            <div class="metric-row"><span>Conviction:</span><span id="recConviction">--</span></div>
+            <div class="metric-row"><span>Stop Loss:</span><span id="recStopLoss">--</span> pips</div>
+            <div class="metric-row"><span>Take Profit:</span><span id="recTakeProfit">--</span> pips</div>
+            <div class="metric-row"><span>Risk/Reward:</span><span id="recRiskReward">--</span></div>
+            <div class="metric-row"><span>Time Horizon:</span><span id="recTimeHorizon">--</span> days</div>
+            <div class="metric-row" style="grid-column: 1/-1;"><span>Expected Return:</span><span id="recExpectedReturn">--</span></div>
+        </div>
+        <div class="metric-row" style="margin-top: 10px;"><span>Key Drivers:</span><span id="recKeyDrivers">--</span></div>
+        <div class="metric-row"><span>Risks:</span><span id="recRisks">--</span></div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="card" style="margin-top: 20px;" id="alertsCard">
+        <div class="card-title"><i class="fas fa-bell"></i> Active Alerts</div>
+        <div id="alertsList">No active alerts</div>
+    </div>
+
+    <!-- Upcoming Meetings -->
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-title"><i class="fas fa-calendar-alt"></i> Upcoming Central Bank Meetings</div>
+        <div id="upcomingMeetings"></div>
+    </div>
+
+    <div class="footer">
+        <i class="fas fa-chart-line"></i> Fundamental Analysis v8.0 | Central Bank Watch · ESI · Geopolitical Risk · Carry Trade · Market Regime
+    </div>
+</div>
+
+<script>
+    // API Service
+    const API_BASE = '';
+    
+    async function apiCall(endpoint) {
+        try {
+            const response = await fetch(`${API_BASE}${endpoint}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`API Error ${endpoint}:`, error);
+            return null;
+        }
+    }
+
+    // UI Helper Functions
+    function getSignalClass(value, bullishLow = false) {
+        if (typeof value === 'string') {
+            const upper = value.toUpperCase();
+            if (upper.includes('BULL') || upper.includes('BUY')) return 'signal-bullish';
+            if (upper.includes('BEAR') || upper.includes('SELL')) return 'signal-bearish';
+            return 'signal-neutral';
+        }
+        if (typeof value === 'number') {
+            if (bullishLow) return value < 30 ? 'signal-bullish' : value > 70 ? 'signal-bearish' : 'signal-neutral';
+            return value > 55 ? 'signal-bullish' : value < 45 ? 'signal-bearish' : 'signal-neutral';
+        }
+        return 'signal-neutral';
+    }
+
+    function formatNumber(num, decimals = 2) {
+        if (num === undefined || num === null) return '--';
+        return typeof num === 'number' ? num.toFixed(decimals) : num;
+    }
+
+    // Main Controller
+    class FundamentalPage {
+        constructor() {
+            this.init();
+        }
+        
+        async init() {
+            this.cacheElements();
+            await this.fetchData();
+            setInterval(() => this.fetchData(), 30000);
+            setInterval(() => this.updateTimestamp(), 1000);
+        }
+        
+        cacheElements() {
+            // Cache all DOM elements
+            this.elements = {
+                compositeScore: document.getElementById('compositeScore'),
+                compositeBar: document.getElementById('compositeBar'),
+                compositeBias: document.getElementById('compositeBias'),
+                compositeConfidence: document.getElementById('compositeConfidence'),
+                analysisTime: document.getElementById('analysisTime'),
+                rateDiff: document.getElementById('rateDiff'),
+                policyDivergence: document.getElementById('policyDivergence'),
+                favors: document.getElementById('favors'),
+                fedFuture: document.getElementById('fedFuture'),
+                ecbFuture: document.getElementById('ecbFuture'),
+                usEsi: document.getElementById('usEsi'),
+                usEsiInterpret: document.getElementById('usEsiInterpret'),
+                euEsi: document.getElementById('euEsi'),
+                euEsiInterpret: document.getElementById('euEsiInterpret'),
+                esiDivergence: document.getElementById('esiDivergence'),
+                marketImpact: document.getElementById('marketImpact'),
+                expectedPips: document.getElementById('expectedPips'),
+                impactConfidence: document.getElementById('impactConfidence'),
+                gprIndex: document.getElementById('gprIndex'),
+                riskRegime: document.getElementById('riskRegime'),
+                riskPremium: document.getElementById('riskPremium'),
+                safeHaven: document.getElementById('safeHaven'),
+                historicalPercentile: document.getElementById('historicalPercentile'),
+                gprTrend: document.getElementById('gprTrend'),
+                carryYield: document.getElementById('carryYield'),
+                carryReturn: document.getElementById('carryReturn'),
+                carrySharpe: document.getElementById('carrySharpe'),
+                carryAttractive: document.getElementById('carryAttractive'),
+                recommendedLeverage: document.getElementById('recommendedLeverage'),
+                rollYield: document.getElementById('rollYield'),
+                marketRegime: document.getElementById('marketRegime'),
+                regimeScore: document.getElementById('regimeScore'),
+                vixEquivalent: document.getElementById('vixEquivalent'),
+                recommendedHedge: document.getElementById('recommendedHedge'),
+                regimeDescription: document.getElementById('regimeDescription'),
+                compositeRiskScore: document.getElementById('compositeRiskScore'),
+                riskLevel: document.getElementById('riskLevel'),
+                eurusdDrivers: document.getElementById('eurusdDrivers'),
+                componentBreakdown: document.getElementById('componentBreakdown'),
+                recDirection: document.getElementById('recDirection'),
+                recPositionSize: document.getElementById('recPositionSize'),
+                recConfidence: document.getElementById('recConfidence'),
+                recConviction: document.getElementById('recConviction'),
+                recStopLoss: document.getElementById('recStopLoss'),
+                recTakeProfit: document.getElementById('recTakeProfit'),
+                recRiskReward: document.getElementById('recRiskReward'),
+                recTimeHorizon: document.getElementById('recTimeHorizon'),
+                recExpectedReturn: document.getElementById('recExpectedReturn'),
+                recKeyDrivers: document.getElementById('recKeyDrivers'),
+                recRisks: document.getElementById('recRisks'),
+                alertsList: document.getElementById('alertsList'),
+                upcomingMeetings: document.getElementById('upcomingMeetings'),
+                marketScanner: document.getElementById('marketScanner')
+            };
+        }
+        
+        async fetchData() {
+            try {
+                const startTime = performance.now();
+                const data = await apiCall('/api/fundamental');
+                const fetchTime = performance.now() - startTime;
+                
+                if (data && data.success !== false) {
+                    this.updateUI(data, fetchTime);
+                } else {
+                    console.warn('No fundamental data received');
+                    this.showError();
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                this.showError();
+            }
+        }
+        
+        updateUI(data, fetchTime) {
+            // Composite Score
+            const composite = data.composite_score || {};
+            const score = composite.score || 0;
+            if (this.elements.compositeScore) this.elements.compositeScore.textContent = score;
+            if (this.elements.compositeBar) this.elements.compositeBar.style.width = `${score}%`;
+            if (this.elements.compositeBias) {
+                this.elements.compositeBias.textContent = composite.bias || 'NEUTRAL';
+                this.elements.compositeBias.className = getSignalClass(composite.bias);
+            }
+            if (this.elements.compositeConfidence) this.elements.compositeConfidence.textContent = composite.confidence || 50;
+            if (this.elements.analysisTime) this.elements.analysisTime.textContent = Math.round(fetchTime);
+            
+            // Central Bank
+            const cb = data.central_bank_policy || {};
+            if (this.elements.rateDiff) this.elements.rateDiff.textContent = cb.current_rate_diff || '--';
+            if (this.elements.policyDivergence) this.elements.policyDivergence.textContent = cb.policy_divergence || '--';
+            if (this.elements.favors) {
+                this.elements.favors.textContent = cb.favors || '--';
+                this.elements.favors.className = cb.favors === 'USD' ? 'signal-bullish' : cb.favors === 'EUR' ? 'signal-bearish' : 'signal-neutral';
+            }
+            if (this.elements.fedFuture) this.elements.fedFuture.textContent = cb.fed_future_6m || '--';
+            if (this.elements.ecbFuture) this.elements.ecbFuture.textContent = cb.ecb_future_6m || '--';
+            
+            // ESI
+            const esi = data.economic_surprise_index || {};
+            const us = esi.US || {};
+            const eu = esi.EU || {};
+            if (this.elements.usEsi) {
+                this.elements.usEsi.textContent = us.index || '--';
+                this.elements.usEsi.className = getSignalClass(us.index);
+            }
+            if (this.elements.usEsiInterpret) this.elements.usEsiInterpret.textContent = us.interpretation ? `(${us.interpretation.replace('_', ' ')})` : '';
+            if (this.elements.euEsi) {
+                this.elements.euEsi.textContent = eu.index || '--';
+                this.elements.euEsi.className = getSignalClass(eu.index, true);
+            }
+            if (this.elements.euEsiInterpret) this.elements.euEsiInterpret.textContent = eu.interpretation ? `(${eu.interpretation.replace('_', ' ')})` : '';
+            if (this.elements.esiDivergence) {
+                const divergence = esi.divergence || 0;
+                this.elements.esiDivergence.textContent = divergence;
+                this.elements.esiDivergence.className = divergence > 0 ? 'signal-bullish' : divergence < 0 ? 'signal-bearish' : 'signal-neutral';
+            }
+            
+            const marketImpact = esi.market_impact || {};
+            if (this.elements.marketImpact) this.elements.marketImpact.textContent = marketImpact.impact || '--';
+            if (this.elements.expectedPips) this.elements.expectedPips.textContent = marketImpact.expected_pips || '--';
+            if (this.elements.impactConfidence) this.elements.impactConfidence.textContent = marketImpact.confidence || '--';
+            
+            // Geopolitical
+            const geo = data.geopolitical_risk || {};
+            if (this.elements.gprIndex) {
+                const gpr = geo.gpr_index || 0;
+                this.elements.gprIndex.textContent = gpr;
+                this.elements.gprIndex.className = gpr > 60 ? 'signal-bearish' : gpr > 40 ? 'signal-neutral' : 'signal-bullish';
+            }
+            if (this.elements.riskRegime) this.elements.riskRegime.textContent = geo.risk_regime || '--';
+            if (this.elements.riskPremium) this.elements.riskPremium.textContent = geo.risk_premium_pips || '--';
+            if (this.elements.safeHaven) this.elements.safeHaven.textContent = geo.safe_haven_flow || '--';
+            if (this.elements.historicalPercentile) this.elements.historicalPercentile.textContent = geo.historical_percentile || '--';
+            if (this.elements.gprTrend) this.elements.gprTrend.textContent = geo.trend || '--';
+            
+            // Carry Trade
+            const carry = data.carry_trade_analysis || {};
+            if (this.elements.carryYield) this.elements.carryYield.textContent = carry.carry_yield_bps || '--';
+            if (this.elements.carryReturn) this.elements.carryReturn.textContent = carry.annualized_return || '--';
+            if (this.elements.carrySharpe) this.elements.carrySharpe.textContent = carry.carry_sharpe || '--';
+            if (this.elements.carryAttractive) {
+                this.elements.carryAttractive.textContent = carry.carry_trade_attractive ? '✅ Yes' : '❌ No';
+                this.elements.carryAttractive.className = carry.carry_trade_attractive ? 'signal-bullish' : 'signal-neutral';
+            }
+            if (this.elements.recommendedLeverage) this.elements.recommendedLeverage.textContent = carry.recommended_leverage || '--';
+            if (this.elements.rollYield) this.elements.rollYield.textContent = carry.roll_yield || '--';
+            
+            // Market Regime
+            const regime = data.market_regime || {};
+            if (this.elements.marketRegime) {
+                const regimeName = regime.regime || 'UNKNOWN';
+                this.elements.marketRegime.textContent = regimeName.toUpperCase();
+                this.elements.marketRegime.className = regimeName === 'risk_on' ? 'signal-bullish' : regimeName === 'risk_off' ? 'signal-bearish' : 'signal-neutral';
+            }
+            if (this.elements.regimeScore) this.elements.regimeScore.textContent = regime.regime_score || '--';
+            if (this.elements.vixEquivalent) this.elements.vixEquivalent.textContent = regime.vix_equivalent || '--';
+            if (this.elements.recommendedHedge) this.elements.recommendedHedge.textContent = regime.recommended_hedge || '--';
+            if (this.elements.regimeDescription) this.elements.regimeDescription.textContent = regime.description || '--';
+            
+            // Market Scanner
+            const scanner = data.market_scanner || {};
+            const riskScore = scanner.composite_risk_score || {};
+            if (this.elements.compositeRiskScore) this.elements.compositeRiskScore.textContent = riskScore.score || '--';
+            if (this.elements.riskLevel) this.elements.riskLevel.textContent = riskScore.level || '--';
+            if (this.elements.eurusdDrivers) {
+                const drivers = scanner.eurusd_drivers || [];
+                this.elements.eurusdDrivers.innerHTML = drivers.slice(0, 2).join('<br>') || '--';
+            }
+            
+            if (this.elements.marketScanner && scanner.markets) {
+                const markets = scanner.markets || {};
+                this.elements.marketScanner.innerHTML = `
+                    <div class="metric-row"><span>DXY:</span><span>${markets.DXY?.price || '--'} (${markets.DXY?.change_24h > 0 ? '+' : ''}${markets.DXY?.change_24h || 0}%)</span></div>
+                    <div class="metric-row"><span>Gold:</span><span>$${markets.Gold?.price || '--'} (${markets.Gold?.change_24h || 0}%)</span></div>
+                    <div class="metric-row"><span>S&P500:</span><span>${markets['S&P500']?.price || '--'} (${markets['S&P500']?.change_24h || 0}%)</span></div>
+                `;
+            }
+            
+            // Components
+            const components = composite.components || {};
+            if (this.elements.componentBreakdown) {
+                this.elements.componentBreakdown.innerHTML = `
+                    <div class="card"><div class="metric-row"><span>Monetary Policy:</span><span class="${getSignalClass(components.monetary_policy)}">${components.monetary_policy || 0}%</span></div></div>
+                    <div class="card"><div class="metric-row"><span>Geopolitical Risk:</span><span class="${getSignalClass(components.geopolitical_risk)}">${components.geopolitical_risk || 0}%</span></div></div>
+                    <div class="card"><div class="metric-row"><span>Economic Surprises:</span><span class="${getSignalClass(components.economic_surprises)}">${components.economic_surprises || 0}%</span></div></div>
+                    <div class="card"><div class="metric-row"><span>Market Regime:</span><span class="${getSignalClass(components.market_regime)}">${components.market_regime || 0}%</span></div></div>
+                `;
+            }
+            
+            // Recommendation
+            const rec = data.recommendation || {};
+            if (this.elements.recDirection) {
+                this.elements.recDirection.textContent = rec.direction || 'HOLD';
+                this.elements.recDirection.className = rec.direction === 'BUY' ? 'signal-bullish' : rec.direction === 'SELL' ? 'signal-bearish' : 'signal-neutral';
+            }
+            if (this.elements.recPositionSize) this.elements.recPositionSize.textContent = rec.position_size || '0';
+            if (this.elements.recConfidence) this.elements.recConfidence.textContent = rec.confidence || '50';
+            if (this.elements.recConviction) this.elements.recConviction.textContent = rec.conviction || '--';
+            if (this.elements.recStopLoss) this.elements.recStopLoss.textContent = rec.stop_loss_pips || '--';
+            if (this.elements.recTakeProfit) this.elements.recTakeProfit.textContent = rec.take_profit_pips || '--';
+            if (this.elements.recRiskReward) this.elements.recRiskReward.textContent = rec.risk_reward || '--';
+            if (this.elements.recTimeHorizon) this.elements.recTimeHorizon.textContent = rec.time_horizon_days || '--';
+            if (this.elements.recExpectedReturn) this.elements.recExpectedReturn.textContent = rec.expected_return || '--';
+            
+            const drivers = rec.key_drivers || [];
+            if (this.elements.recKeyDrivers) this.elements.recKeyDrivers.innerHTML = drivers.map(d => `<span class="badge">${d}</span>`).join(' ') || '--';
+            
+            const risks = rec.risks || [];
+            if (this.elements.recRisks) this.elements.recRisks.innerHTML = risks.map(r => `<span class="badge" style="background:#ff444433">⚠️ ${r}</span>`).join(' ') || '--';
+            
+            // Alerts
+            const alerts = data.alert_triggers || [];
+            if (this.elements.alertsList && alerts.length > 0) {
+                this.elements.alertsList.innerHTML = alerts.map(a => 
+                    `<div class="metric-row alert-${a.severity.toLowerCase()}">
+                        <span>🔔 ${a.type}</span>
+                        <span>${a.message}</span>
+                    </div>`
+                ).join('');
+            } else if (this.elements.alertsList) {
+                this.elements.alertsList.innerHTML = 'No active alerts - Fundamental conditions normal';
+            }
+            
+            // Upcoming Meetings
+            const meetings = cb.next_meetings || [];
+            if (this.elements.upcomingMeetings && meetings.length > 0) {
+                this.elements.upcomingMeetings.innerHTML = meetings.map(m => 
+                    `<div class="metric-row"><span>${m.bank}</span><span>${m.date} · ${m.days_until} days · Cut prob: ${m.expected_cut_probability}%</span></div>`
+                ).join('');
+            } else if (this.elements.upcomingMeetings) {
+                this.elements.upcomingMeetings.innerHTML = '<div class="metric-row">No upcoming meetings scheduled</div>';
+            }
+        }
+        
+        showError() {
+            if (this.elements.compositeScore) this.elements.compositeScore.textContent = 'ERROR';
+            if (this.elements.recDirection) this.elements.recDirection.textContent = 'DATA DELAY';
+            if (this.elements.recRisks) this.elements.recRisks.innerHTML = '⚠️ Unable to fetch live fundamental data. Check backend connection.';
+        }
+        
+        updateTimestamp() {
+            const ts = document.getElementById('liveTimestamp');
+            if (ts) ts.textContent = new Date().toLocaleTimeString();
+        }
+    }
+    
+    // Start the page
+    new FundamentalPage();
+</script>
+</body>
+</html>
