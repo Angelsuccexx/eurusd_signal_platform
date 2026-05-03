@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="css/main.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4048517587486673"
+         crossorigin="anonymous"></script>
+    
     <!-- Chart.js with adapters -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -45,6 +50,17 @@
                 <div class="time-display" id="current-time"></div>
             </div>
         </header>
+
+        <!-- Google AdSense Banner 1 - Top (Below Header) -->
+        <div class="ad-container" style="text-align: center; margin: 15px 0; min-height: 90px; background: rgba(0,0,0,0.2); border-radius: 12px; overflow: hidden;">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-4048517587486673"
+                 data-ad-slot="1234567890"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
 
         <!-- Live Forex News Ticker (Feature 4) -->
         <div class="news-ticker" style="background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,0,0,0.3)); border-radius: 12px; margin-bottom: 20px; padding: 8px 16px; display: flex; align-items: center; gap: 16px; backdrop-filter: blur(10px);">
@@ -142,6 +158,17 @@
                 <span><i class="fas fa-waveform"></i> Volatility: <span id="chart-volatility">--</span>%</span>
             </div>
         </section>
+
+        <!-- Google AdSense Banner 2 - Middle (After Chart) -->
+        <div class="ad-container" style="text-align: center; margin: 20px 0; min-height: 90px; background: rgba(0,0,0,0.2); border-radius: 12px; overflow: hidden;">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-4048517587486673"
+                 data-ad-slot="1234567891"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
 
         <!-- Weekend Market Analysis & Forecast -->
         <section class="weekend-section">
@@ -626,6 +653,17 @@
             </div>
         </section>
 
+        <!-- Google AdSense Banner 3 - Bottom (Before API Status) -->
+        <div class="ad-container" style="text-align: center; margin: 20px 0; min-height: 250px; background: rgba(0,0,0,0.2); border-radius: 12px; overflow: hidden;">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-4048517587486673"
+                 data-ad-slot="1234567892"
+                 data-ad-format="rectangle"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        </div>
+
         <!-- NEW: API Status & Data Source Indicator -->
         <div class="api-status-bar" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 8px 16px; margin-bottom: 20px; font-size: 11px;">
             <div style="display: flex; gap: 16px; flex-wrap: wrap;">
@@ -782,6 +820,11 @@
         .api-status-bar {
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        
+        /* Ad container styles */
+        .ad-container ins {
+            background: transparent;
         }
     </style>
 
@@ -1505,7 +1548,7 @@
                     const indicators = data.indicators || {};
                     const rsi = indicators.rsi || 50;
                     const atr = indicators.atr?.pips || 20;
-                    const volatility = indicators.volatility || 12.5;
+                                        const volatility = indicators.volatility || 12.5;
                     
                     document.getElementById('rsi-value').textContent = rsi;
                     document.getElementById('rsi-status').textContent = rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral';
